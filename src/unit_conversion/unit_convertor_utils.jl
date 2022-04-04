@@ -46,12 +46,11 @@ function _get_data_units(rescale_functions)::Dict{Symbol,Any}
     rescale_density = rescale_functions[5]
     rescale_diameter = rescale_functions[6]
     rescale_area = rescale_functions[7]
+    rescale_cost = rescale_functions[8]
 
     node_units = Dict{String,Function}(
         "min_pressure" => rescale_pressure,
-        "max_pressure" => rescale_pressure, 
-        "min_injection" => rescale_mass_flow, 
-        "max_injection" => rescale_mass_flow, 
+        "max_pressure" => rescale_pressure,  
     )
 
     pipe_units = Dict{String,Function}(
@@ -60,40 +59,25 @@ function _get_data_units(rescale_functions)::Dict{Symbol,Any}
         "area" => rescale_area,
     )
 
-    compressor_units = Dict{String,Function}(
-        "max_power" => rescale_mass_flow, 
-        "min_flow" => rescale_mass_flow, 
-        "max_flow" => rescale_mass_flow, 
+    receipt_nomination_units = Dict{String,Function}(
+        "max_injection" => rescale_mass_flow,
+        "cost" => rescale_cost
     )
 
-    initial_pipe_flow_units = Dict{String,Function}(
-        "pipe_flow" => rescale_mass_flow, 
+    delivery_nomination_units = Dict{String,Function}(
+        "max_withdrawal" => rescale_mass_flow,
+        "cost" => rescale_cost
     )
 
-    initial_node_pressure_units = Dict{String,Function}(
-        "nodal_pressure" => rescale_pressure
-    )
-
-    initial_compressor_flow_units = Dict{String,Function}(
-        "compressor_flow" => rescale_mass_flow
-    )
-
-    boundary_flow_units = Dict{String,Function}(
-        "boundary_nonslack_flow" => rescale_mass_flow 
-    )
-
-    boundary_pressure_units = Dict{String,Function}(
-        "boundary_pslack" => rescale_pressure
+    slack_pressure_units = Dict{String,Any}(
+        "slack_pressure" => rescale_pressure
     )
 
     units[:node_units] = node_units
     units[:pipe_units] = pipe_units
-    units[:compressor_units] = compressor_units
-    units[:initial_pipe_flow_units] = initial_pipe_flow_units
-    units[:initial_compressor_flow_units] = initial_compressor_flow_units
-    units[:initial_node_pressure_units] = initial_node_pressure_units
-    units[:boundary_flow_units] = boundary_flow_units 
-    units[:boundary_pressure_units] = boundary_pressure_units
+    units[:receipt_nomination_units] = receipt_nomination_units
+    units[:delivery_nomination_units] = delivery_nomination_units
+    units[:slack_pressure_units] = slack_pressure_units
 
     return units
 end 
@@ -104,12 +88,9 @@ function _rescale_data!(data::Dict{String,Any},
     units = _get_data_units(rescale_functions)
     node_units = units[:node_units]
     pipe_units = units[:pipe_units]
-    compressor_units = units[:compressor_units] 
-    initial_pipe_flow_units = units[:initial_pipe_flow_units]
-    initial_compressor_flow_units = units[:initial_compressor_flow_units]
-    initial_node_pressure_units = units[:initial_node_pressure_units]
-    boundary_flow_units = units[:boundary_flow_units]
-    boundary_pressure_units = units[:boundary_pressure_units]
+    receipt_nomination_units = units[:receipt_nomination_units] 
+    delivery_nomination_units = units[:delivery_nomination_units]
+    slack_pressure_units = units[:slack_pressure_units]
 
     rescale_mass_flow = rescale_functions[1]
     rescale_mass_flux = rescale_functions[2]
@@ -118,7 +99,7 @@ function _rescale_data!(data::Dict{String,Any},
     rescale_density = rescale_functions[5]
     rescale_diameter = rescale_functions[6]
     rescale_area = rescale_functions[7]
-    rescale_boundary_compressor = rescale_functions[8]
+    rescale_cost = rescale_functions[8]
 
 
     for (_, node) in get(data, "nodes", [])
@@ -137,27 +118,22 @@ function _rescale_data!(data::Dict{String,Any},
         end 
     end 
     
-    for (_, compressor) in get(data, "compressors", [])
-        for (param, f) in compressor_units
-            (!haskey(Dict(compressor), param)) && (continue)
-            value = compressor[param]
-            compressor[param] = f(value)
+    for (_, receipt) in get(data, "receipt_nominations", [])
+        for (param, f) in receipt_nomination_units
+            value = receipt[param]
+            receipt[param] = f(value)
+        end 
+    end 
+    
+    for (_, delivery) in get(data, "delivery_nominations", [])
+        for (param, f) in delivery_nomination_units
+            value = delivery[param]
+            delivery[param] = f(value)
         end 
     end 
 
-    for (param, f) in merge(initial_node_pressure_units, initial_pipe_flow_units, initial_compressor_flow_units)
-        for (i, value) in get(data, param, [])
-            data[param][i] = f(value)
-        end 
+    for (i, value) in get(data, "slack_pressure", [])
+        data["slack_pressure"][i] = slack_pressure_units["slack_pressure"](value)
     end 
 
-    for (param, f) in merge(boundary_flow_units, boundary_pressure_units)
-        for (i, value) in get(data, param, [])
-            data[param][i] = f(value)          
-        end 
-    end 
-
-    for (_, value) in get(data, "boundary_compressor", []) 
-        rescale_boundary_compressor(value)
-    end 
 end

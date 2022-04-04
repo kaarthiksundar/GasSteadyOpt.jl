@@ -8,14 +8,11 @@ function _si_to_english!(data::Dict{String,Any},
     rescale_density = x -> x
     rescale_diameter = x -> m_to_inches(x)
     rescale_area = x -> sq_m_to_sq_inches(x)
-    function rescale_compressor_boundary_conditions!(type, value)
-        (type == 1) && (value = rescale_pressure(value))
-        (type == 2) && (value = rescale_mass_flow(value))
-    end 
+    rescale_cost = x -> x / get_kgps_to_mmscfd_conversion_factor(params)
 
     rescale_functions = [rescale_mass_flow, rescale_mass_flux, 
-        rescale_time, rescale_pressure, rescale_length, rescale_density, 
-        rescale_diameter, rescale_area, rescale_compressor_boundary_conditions!]
+        rescale_pressure, rescale_length, rescale_density, 
+        rescale_diameter, rescale_area, rescale_cost]
     
     _rescale_data!(data, params, rescale_functions)
 end 

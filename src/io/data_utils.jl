@@ -1,43 +1,47 @@
 function _parse_data(data_folder::AbstractString; 
     case_name::AbstractString="", 
-    case_types::Vector{Symbol}=Symbol[], 
-    initial_guess_filename::AbstractString="")
+    case_types::Vector{Symbol}=Symbol[])
+    metadata_file = data_folder * "metadata.json"
     network_file = data_folder * "network.json"
     params_file = data_folder * "params"
-    bc_file = data_folder * "bc"
-    ig_file = data_folder * initial_guess_filename * ".json"
-    if (:params in case_types)
-        params_file = params_file * "_" * case_name * ".json"
-    else 
-        params_file = params_file * ".json"
-    end 
+    nominations_file = data_folder * "nominations"
+    slack_pressure_file = data_folder * "slack_pressures"
+
+    params_file = 
+        if (:params in case_types) 
+            params_file * "_" * case_name * ".json"
+        else 
+            params_file * ".json"
+        end
+        
+    nominations_file = 
+        if (:nominations in case_types)
+            nominations_file * "_" * case_name * ".json"
+        else 
+            nominations_file * ".json"
+        end 
+
+    slack_pressure_file = 
+        if (:slack_pressures in case_types) 
+            slack_pressure_file * "_" * case_name * ".json"
+        else 
+            slack_pressure_file * ".json"
+        end 
     
-    if (:bc in case_types)
-        bc_file = bc_file * "_" * case_name * ".json"
-    else 
-        bc_file = bc_file * ".json"
-    end 
+    metadata = _parse_json(metadata_file)
     network_data = _parse_json(network_file)
     params_data = _parse_json(params_file)
-    bc_data = _parse_json(bc_file)
+    nominations_data = _parse_json(nominations_file)
+    slack_pressure_data = _parse_json(slack_pressure_file)
 
-    if isfile(ig_file)
-        ig_data = parse_json(ig_file)
-        required_ig_fields = ["nodal_pressure", 
-        "pipe_flow", "compressor_flow"]
-        filter!(p -> p.first in required_ig_fields, ig_data)
-        data = merge(network_data, params_data, bc_data, ig_data)
-    else
-        @debug "initial guess file not provided, the code will generate an initial guess"
-        data = merge(network_data, params_data, bc_data)
-    end
-    
+    return merge(metadata, network_data, params_data, nominations_data, slack_pressure_data)
+
     return data
 end 
 
 function _get_nominal_pressure(data::Dict{String,Any}, units)
     slack_pressures = []
-    for (_, value) in get(data, "boundary_pslack", [])
+    for (_, value) in get(data, "slack_pressure", [])
         push!(slack_pressures, value)
     end 
 
@@ -61,10 +65,10 @@ function process_data!(data::Dict{String,Any})
 
     defaults_exhaustive = [288.706, 0.6, 1.4, 5000.0, NaN, NaN, NaN, 0]
 
-    simulation_params = data["simulation_params"]
+    optimization_params = data["optimization_params"]
     
     key_map = Dict{String,String}()
-    for k in keys(simulation_params)
+    for k in keys(optimization_params)
         occursin("Temperature", k) && (key_map["temperature"] = k)
         occursin("Gas", k) && (key_map["gas_specific_gravity"] = k)
         occursin("Specific heat", k) &&
@@ -87,7 +91,7 @@ function process_data!(data::Dict{String,Any})
         default = defaults_exhaustive[i]
         if param == "units"
             if haskey(key_map, param)
-                value = Int(simulation_params[key_map[param]])
+                value = Int(optimization_params[key_map[param]])
                 if (value == 0)
                     params[:units] = 0
                     params[:is_si_units] = 1
@@ -144,12 +148,13 @@ function process_data!(data::Dict{String,Any})
     end 
     nominal_values[:velocity] =
     if isnan(params[:nominal_velocity])
-       ceil(nominal_values[:sound_speed]/100)
+       floor(nominal_values[:sound_speed]/100)
     else
         params[:nominal_velocity]
     end
     nominal_values[:mass_flux] = nominal_values[:density] * nominal_values[:velocity]
     nominal_values[:mass_flow] = nominal_values[:mass_flux] * nominal_values[:area]
+    nominal_values[:gas_cost] = 1/nominal_values[:mass_flow]
     nominal_values[:euler_num] = nominal_values[:pressure] / (nominal_values[:density] * nominal_values[:sound_speed]^2)
     nominal_values[:mach_num] = nominal_values[:velocity] / nominal_values[:sound_speed]
     

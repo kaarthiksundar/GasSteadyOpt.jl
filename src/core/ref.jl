@@ -1,5 +1,6 @@
 function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
 
+    ref[:slack_nodes] = []
     for (i, node) in get(data, "nodes", [])
         name = :node
         (!haskey(ref, name)) && (ref[name] = Dict())
@@ -8,9 +9,8 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         @assert id == node["node_id"]
         ref[name][id]["id"] = id
         ref[name][id]["is_slack"] = node["slack_bool"]
-        ref[name][id]["pressure"] = NaN
-        ref[name][id]["density"] = NaN 
-        ref[name][id]["withdrawal"] = NaN
+        (node["slack_bool"] == 1) && (push!(ref[:slack_nodes], id))
+        ref[name][id]["slack_pressure"] = (node["slack_bool"] == 1) ? data["slack_pressure"][i] : NaN
         ref[name][id]["min_pressure"] = node["min_pressure"]
         ref[name][id]["max_pressure"] = node["max_pressure"]
     end
@@ -28,7 +28,6 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["area"] = pipe["area"]
         ref[name][id]["length"] = pipe["length"]
         ref[name][id]["friction_factor"] = pipe["friction_factor"]
-        ref[name][id]["mass_flow"] = NaN
     end
 
     for (i, compressor) in get(data, "compressors", [])
@@ -36,71 +35,47 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         (!haskey(ref, name)) && (ref[name] = Dict())
         id = parse(Int64, i)
         ref[name][id] = Dict()
-        @assert id == compressor["comp_id"]
+        @assert id == compressor["compressor_id"]
         ref[name][id]["id"] = id
         ref[name][id]["to_node"] = compressor["to_node"]
         ref[name][id]["fr_node"] = compressor["from_node"]
-        ref[name][id]["control_type"] = unknown_control
-        ref[name][id]["c_ratio"] = NaN
-        ref[name][id]["discharge_pressure"] = NaN
-        ref[name][id]["flow"] = NaN
     end
+
+    for (i, receipt) in get(data, "receipts", [])
+        name = :receipt 
+        (!haskey(ref, name)) && (ref[name] = Dict())
+        id = parse(Int64, i)
+        ref[name][id] = Dict()
+        @assert id == receipt["receipt_id"]
+        ref[name][id]["id"] = id
+        ref[name][id]["node_id"] = receipt["node_id"]
+        ref[name][id]["max_injection"] = data["receipt_nominations"][i]["max_injection"]
+        ref[name][id]["cost"] = data["receipt_nominations"][i]["cost"]
+    end 
+
+    for (i, delivery) in get(data, "deliveries", [])
+        name = :delivery 
+        (!haskey(ref, name)) && (ref[name] = Dict())
+        id = parse(Int64, i)
+        ref[name][id] = Dict()
+        @assert id == delivery["delivery_id"]
+        ref[name][id]["id"] = id
+        ref[name][id]["node_id"] = delivery["node_id"]
+        ref[name][id]["max_withdrawal"] = data["delivery_nominations"][i]["max_withdrawal"]
+        ref[name][id]["cost"] = data["delivery_nominations"][i]["cost"]
+    end 
+
     return
 end
 
-function _add_index_info!(ref::Dict{Symbol, Any}, data::Dict{String, Any})
-    dofid = 1
-    ref[:dof] = Dict{Int64, Any}()
-    
-    for (i, node) in ref[:node]
-        node[:dof] = dofid
-        ref[:dof][dofid] = (:node, i)
-        dofid += 1
-    end
-
-    for (i, pipe) in ref[:pipe]
-        pipe[:dof] = dofid
-        ref[:dof][dofid] = (:pipe, i)
-        dofid += 1
-    end
-
-    for (i, compressor) in ref[:compressor]
-        compressor[:dof] = dofid
-        ref[:dof][dofid] = (:compressor, i)
-        dofid += 1
-    end
-end
-
-function _add_incident_dofs_info_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
-    ref[:incoming_dofs] = Dict{Int64, Vector{Int64}}()
-    ref[:outgoing_dofs] = Dict{Int64, Vector{Int64}}()
-
-    for (i, _) in ref[:node]
-        ref[:incoming_dofs][i] = []
-        ref[:outgoing_dofs][i] = []
-    end
-
-    for (_, pipe) in ref[:pipe]
-        push!(ref[:incoming_dofs][pipe["to_node"]], pipe[:dof])
-        push!(ref[:outgoing_dofs][pipe["fr_node"]], pipe[:dof])
-    end
-
-    for (_, compressor) in get(ref, :compressor, [])
-        push!(ref[:incoming_dofs][compressor["to_node"]], compressor[:dof])
-        push!(ref[:outgoing_dofs][compressor["fr_node"]], compressor[:dof])
-    end
-
-    return
-end
 
 function _add_pipe_info_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
-    ref[:incoming_pipes] = Dict{Int64, Vector{Int64}}()
-    ref[:outgoing_pipes] = Dict{Int64, Vector{Int64}}()
-
-    for (i, _) in ref[:node]
-        ref[:incoming_pipes][i] = []
-        ref[:outgoing_pipes][i] = []
-    end
+    ref[:incoming_pipes] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
+    ref[:outgoing_pipes] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
 
     for (id, pipe) in ref[:pipe]
         push!(ref[:incoming_pipes][pipe["to_node"]], id)
@@ -110,13 +85,12 @@ function _add_pipe_info_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
 end
 
 function _add_compressor_info_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
-    ref[:incoming_compressors] = Dict{Int64, Vector{Int64}}()
-    ref[:outgoing_compressors] = Dict{Int64, Vector{Int64}}()
-    
-    for (i, _) in ref[:node]
-        ref[:incoming_compressors][i] = []
-        ref[:outgoing_compressors][i] = []
-    end
+    ref[:incoming_compressors] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
+    ref[:outgoing_compressors] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
 
     for (id, compressor) in get(ref, :compressor, [])
         push!(ref[:incoming_compressors][compressor["to_node"]], id)
@@ -124,6 +98,28 @@ function _add_compressor_info_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String
     end
     return
 end
+
+function _add_receipts_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:receipts_at_node] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
+
+    for (id, receipt) in get(ref, :receipt, [])
+        push!(ref[:receipts_at_node][receipt["node_id"]], id)
+    end 
+    return
+end 
+
+function _add_deliveries_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:deliveries_at_node] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
+
+    for (id, delivery) in get(ref, :delivery, [])
+        push!(ref[:deliveries_at_node][delivery["node_id"]], id)
+    end 
+    return
+end 
 
 
 function build_ref(data::Dict{String,Any};
