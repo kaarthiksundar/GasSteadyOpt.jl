@@ -13,6 +13,9 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["slack_pressure"] = (node["slack_bool"] == 1) ? data["slack_pressure"][i] : NaN
         ref[name][id]["min_pressure"] = node["min_pressure"]
         ref[name][id]["max_pressure"] = node["max_pressure"]
+        ref[name][id]["pressure"] = NaN
+        ref[name][id]["density"] = NaN
+        ref[name][id]["potential"] = NaN
     end
 
     for (i, pipe) in get(data, "pipes", [])
@@ -28,6 +31,7 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["area"] = pipe["area"]
         ref[name][id]["length"] = pipe["length"]
         ref[name][id]["friction_factor"] = pipe["friction_factor"]
+        ref[name][id]["flow"] = NaN
     end
 
     for (i, compressor) in get(data, "compressors", [])
@@ -39,6 +43,8 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["id"] = id
         ref[name][id]["to_node"] = compressor["to_node"]
         ref[name][id]["fr_node"] = compressor["from_node"]
+        ref[name][id]["flow"] = NaN
+        ref[name][id]["c_ratio"] = NaN
     end
 
     for (i, receipt) in get(data, "receipts", [])
@@ -51,6 +57,7 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["node_id"] = receipt["node_id"]
         ref[name][id]["max_injection"] = data["receipt_nominations"][i]["max_injection"]
         ref[name][id]["cost"] = data["receipt_nominations"][i]["cost"]
+        ref[name][id]["injection"] = NaN
     end 
 
     for (i, delivery) in get(data, "deliveries", [])
@@ -63,6 +70,7 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["node_id"] = delivery["node_id"]
         ref[name][id]["max_withdrawal"] = data["delivery_nominations"][i]["max_withdrawal"]
         ref[name][id]["cost"] = data["delivery_nominations"][i]["cost"]
+        ref[name][id]["withdrawal"] = NaN
     end 
 
     return

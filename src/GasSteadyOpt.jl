@@ -15,6 +15,7 @@ include("unit_conversion/unit_convertors.jl")
 
 include("core/eos.jl")
 include("core/types.jl")
+include("core/bounds.jl")
 include("core/ref.jl")
 include("core/sol.jl")
 include("core/initialize_sopt.jl")

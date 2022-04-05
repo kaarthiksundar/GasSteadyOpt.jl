@@ -37,5 +37,9 @@ function initialize_optimizer(data::Dict{String,Any};
         _get_eos(eos)...
     )
 
+    _add_nodal_potential_bounds_to_ref!(sopt)
+    _add_pipe_flow_bounds_to_ref!(sopt)
+    _add_compressor_flow_bounds_to_ref!(sopt)
+
     return sopt
 end
