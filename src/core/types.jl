@@ -9,6 +9,7 @@ end
 @enum OBJECTIVE_TYPE begin 
     unknown_obj = 0
     profit = 1
+    power_surrogate = 2
 end 
 
 struct OptModel 
@@ -19,15 +20,19 @@ struct OptModel
     objective_type::OBJECTIVE_TYPE
 end 
 
-function OptModel(model_type::MODEL_TYPE, objective_type::OBJECTIVE_TYPE)
-    return OptModel(JuMP.Model(), 
+OptModel(model_type::MODEL_TYPE, objective_type::OBJECTIVE_TYPE) = OptModel(JuMP.Model(), 
         Dict{Symbol,Any}(), Dict{Symbol,Any}(), 
         model_type, objective_type)
-end
+
+
+OptModel(model_type::MODEL_TYPE) = OptModel(JuMP.Model(), 
+    Dict{Symbol,Any}(), Dict{Symbol,Any}(), 
+    model_type, unknown_obj
+)
 
 OptModel() = OptModel(JuMP.Model(), 
     Dict{Symbol,Any}(), Dict{Symbol,Any}(), 
-    MODEL_TYPE::unknown_model, OBJECTIVE_TYPE::unknown_obj)
+    unknown_model, unknown_obj)
 
 
 struct SteadyOptimizer
@@ -37,12 +42,14 @@ struct SteadyOptimizer
     nominal_values::Dict{Symbol,Any}
     params::Dict{Symbol,Any}
     nlp::OptModel 
-    relaxation::OptModel
+    nlp_relaxation::OptModel
+    min_power_relaxation::OptModel
+    bt::OptModel
+    relaxation_options::Dict{Symbol,Any}
     pu_eos_coeffs::Function
     pu_pressure_to_pu_density::Function
     pu_density_to_pu_pressure::Function
 end
-
 
 ref(sopt::SteadyOptimizer) = sopt.ref
 ref(sopt::SteadyOptimizer, key::Symbol) = sopt.ref[key]

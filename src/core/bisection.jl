@@ -28,7 +28,7 @@ function _bisection(f, a, b, fa, fb, ftol, wtol, maxiter)
         m = (a+b)/2.0
         fm = f(m)
         abs(fm) < ftol && return (x = m, fx = fm, isroot = true, iter = iter, ismaxiter = false)
-        abs(b-a) <= wtol && return (x = m, fx = fm, isroot = false, iter = iter, ismaxiter = false)
+        abs(b-a) < wtol && return (x = m, fx = fm, isroot = true, iter = iter, ismaxiter = false)
         if fa * fm > 0
             a, fa = m, fm
         else

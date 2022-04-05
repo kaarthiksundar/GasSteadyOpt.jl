@@ -57,6 +57,13 @@ function _get_data_units(rescale_functions)::Dict{Symbol,Any}
         "diameter" => rescale_diameter,
         "length" => rescale_length,
         "area" => rescale_area,
+        "min_flow" => rescale_flow, 
+        "max_flow" => rescale_flow
+    )
+
+    compressor_units = Dict{String,Any}(
+        "min_flow" => rescale_flow, 
+        "max_flow" => rescale_flow
     )
 
     receipt_nomination_units = Dict{String,Function}(
@@ -75,6 +82,7 @@ function _get_data_units(rescale_functions)::Dict{Symbol,Any}
 
     units[:node_units] = node_units
     units[:pipe_units] = pipe_units
+    units[:compressor_units] = compressor_units
     units[:receipt_nomination_units] = receipt_nomination_units
     units[:delivery_nomination_units] = delivery_nomination_units
     units[:slack_pressure_units] = slack_pressure_units
@@ -88,6 +96,7 @@ function _rescale_data!(data::Dict{String,Any},
     units = _get_data_units(rescale_functions)
     node_units = units[:node_units]
     pipe_units = units[:pipe_units]
+    compressor_units = units[:compressor_units]
     receipt_nomination_units = units[:receipt_nomination_units] 
     delivery_nomination_units = units[:delivery_nomination_units]
     slack_pressure_units = units[:slack_pressure_units]
@@ -115,6 +124,14 @@ function _rescale_data!(data::Dict{String,Any},
             (!haskey(pipe, param)) && (continue)
             value = pipe[param]
             pipe[param] = f(value)
+        end 
+    end 
+
+    for (_, compressor) in get(data, "compressors", [])
+        for (param, f) in compressor_units
+            (!haskey(pipe, param)) && (continue)
+            value = compressor[param]
+            compressor[param] = f(value)
         end 
     end 
     

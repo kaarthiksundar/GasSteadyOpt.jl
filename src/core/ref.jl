@@ -32,6 +32,8 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["length"] = pipe["length"]
         ref[name][id]["friction_factor"] = pipe["friction_factor"]
         ref[name][id]["flow"] = NaN
+        ref[name][id]["min_flow"] = get(pipe, "min_flow", NaN)
+        ref[name][id]["max_flow"] = get(pipe, "max_flow", NaN)
     end
 
     for (i, compressor) in get(data, "compressors", [])
@@ -45,6 +47,8 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["fr_node"] = compressor["from_node"]
         ref[name][id]["flow"] = NaN
         ref[name][id]["c_ratio"] = NaN
+        ref[name][id]["min_flow"] = get(pipe, "min_flow", NaN)
+        ref[name][id]["max_flow"] = get(pipe, "max_flow", NaN)
     end
 
     for (i, receipt) in get(data, "receipts", [])
@@ -55,6 +59,7 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         @assert id == receipt["receipt_id"]
         ref[name][id]["id"] = id
         ref[name][id]["node_id"] = receipt["node_id"]
+        ref[name][id]["min_injection"] = 0.0
         ref[name][id]["max_injection"] = data["receipt_nominations"][i]["max_injection"]
         ref[name][id]["cost"] = data["receipt_nominations"][i]["cost"]
         ref[name][id]["injection"] = NaN
@@ -68,6 +73,7 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         @assert id == delivery["delivery_id"]
         ref[name][id]["id"] = id
         ref[name][id]["node_id"] = delivery["node_id"]
+        ref[name][id]["min_withdrawal"] = 0.0
         ref[name][id]["max_withdrawal"] = data["delivery_nominations"][i]["max_withdrawal"]
         ref[name][id]["cost"] = data["delivery_nominations"][i]["cost"]
         ref[name][id]["withdrawal"] = NaN
@@ -127,6 +133,18 @@ function _add_deliveries_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any}
         push!(ref[:deliveries_at_node][delivery["node_id"]], id)
     end 
     return
+end 
+
+function _add_nodes_incident_on_compressors!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:is_node_incident_on_compressor] = Dict{Int64,Bool}(
+        i => false for i in keys(ref[:node])
+    )
+
+    for (_, compressor) in get(ref, :compressor, [])
+        ref[:is_node_incident_on_compressor][compressor["to_node"]] = true 
+        ref[:is_node_incident_on_compressor][compressor["fr_node"]] = true 
+    end
+
 end 
 
 
