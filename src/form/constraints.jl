@@ -48,7 +48,11 @@ function _add_pipe_physics_constraints!(sopt::SteadyOptimizer, opt_model::OptMod
         )
     end 
     if (opt_model.model_type == lp_relaxation)
-        return
+        con[:pipe_physics] = @constraint(m, [i in ids], 
+            var[:potential][pipe[i]]["fr_node"] - var[:potential][pipe[i]["to_node"]] == 
+                resistance[i] * var[:pipe_flow_lifted][i]
+        )
+        # TODO: add LP relaxation
     end 
 end 
 
