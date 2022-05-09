@@ -14,7 +14,7 @@ end
 function _add_nodal_pressure_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
     m = opt_model.model 
     var = opt_model.variables
-    ids = keys(filter(it -> last(it), ref(sopt, :is_node_incident_on_compressor)))
+    ids = keys(filter(it -> last(it), ref(sopt, :is_pressure_node)))
     _, b2 = get_eos_coeffs(sopt)
     isapprox(b2, 0.0) && (return)
     var[:pressure] = @variable(m, [i in ids], 
@@ -34,10 +34,10 @@ function _add_pipe_flow_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
         upper_bound = ref(spot, :pipe, i, "max_flow"), 
         base_name = "fp"
     )
-    (opt_model.model_type != lp_relaxation) && (return)
+    (opt_model.model_type != lp_relaxation || opt_model.model_type != milp_relaxation) && (return)
     var[:pipe_flow_lifted] = @variable(m, [i in ids], 
         lower_bound = sign(ref(sopt, :pipe, i, "min_flow")) * ref(sopt, :pipe, i, "min_flow")^2,
-        upper_bound = sign(ref(sopt, :pipe, i, "max_flow")) * ref(sopt, :pipe, i, "max_flow")^2
+        upper_bound = sign(ref(sopt, :pipe, i, "max_flow")) * ref(sopt, :pipe, i, "max_flow")^2,
         base_name = "f_mod_f"
     )
 end 
@@ -59,7 +59,7 @@ function _add_compressor_auxiliary_variables!(sopt::SteadyOptimizer, opt_model::
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :compressor))
-    var[:compressor_auxiliary] = @variable(m, [i in ids],
+    var[:compressor_auxiliary] = @variable(m, [i in ids; ref(sopt, :compressor, i, "min_flow") < 0.0],
         lower_bound = ref(sopt, :compressor, i, "min_flow"),
         upper_bound = ref(spot, :compressor, i, "max_flow"),
         base_name = "aux_c"

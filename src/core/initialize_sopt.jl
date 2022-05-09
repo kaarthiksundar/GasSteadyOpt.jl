@@ -12,7 +12,6 @@ end
 function initialize_optimizer(data::Dict{String,Any}; 
     eos::Symbol=:ideal, 
     populate_nlp::Bool=true, 
-    objective_type::OBJECTIVE_TYPE=profit,
     relaxation_type::Symbol=:lp, 
     perform_obbt::Bool=false, 
     obbt_relaxation_type::Symbol=:lp
@@ -40,8 +39,8 @@ function initialize_optimizer(data::Dict{String,Any};
         _initialize_solution(data), 
         nominal_values, 
         params, 
-        (populate_nlp) ? OptModel(nlp, objective_type) : OptModel(), 
-        OptModel(relaxation, objective_type), 
+        (populate_nlp) ? OptModel(nlp, profit) : OptModel(), 
+        OptModel(relaxation, profit), 
         OptModel(relaxation, power_surrogate),
         (perform_obbt) ? OptModel(obbt_relaxation) : OptModel(),
         Dict{Symbol,Any}(),

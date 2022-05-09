@@ -4,6 +4,7 @@ export MODEL_TYPE, OBJECTIVE_TYPE
     unknown_model = 0
     nlp = 1
     lp_relaxation = 2 
+    milp_relaxation = 3
 end
 
 @enum OBJECTIVE_TYPE begin 
@@ -15,24 +16,20 @@ end
 struct OptModel 
     model::JuMP.AbstractModel
     variables::Dict{Symbol,Any}
-    constraints::Dict{Symbol,Any}
     model_type::MODEL_TYPE 
     objective_type::OBJECTIVE_TYPE
 end 
 
 OptModel(model_type::MODEL_TYPE, objective_type::OBJECTIVE_TYPE) = OptModel(JuMP.Model(), 
-        Dict{Symbol,Any}(), Dict{Symbol,Any}(), 
-        model_type, objective_type)
+        Dict{Symbol,Any}(), model_type, objective_type)
 
 
 OptModel(model_type::MODEL_TYPE) = OptModel(JuMP.Model(), 
-    Dict{Symbol,Any}(), Dict{Symbol,Any}(), 
-    model_type, unknown_obj
+    Dict{Symbol,Any}(), model_type, unknown_obj
 )
 
 OptModel() = OptModel(JuMP.Model(), 
-    Dict{Symbol,Any}(), Dict{Symbol,Any}(), 
-    unknown_model, unknown_obj)
+    Dict{Symbol,Any}(), unknown_model, unknown_obj)
 
 
 struct SteadyOptimizer

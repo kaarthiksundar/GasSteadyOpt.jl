@@ -46,7 +46,8 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["to_node"] = compressor["to_node"]
         ref[name][id]["fr_node"] = compressor["from_node"]
         ref[name][id]["flow"] = NaN
-        ref[name][id]["c_ratio"] = NaN
+        ref[name][id]["min_c_ratio"] = compressor["c_ratio_min"]
+        ref[name][id]["max_c_ratio"] = compressor["c_ratio_max"]
         ref[name][id]["min_flow"] = get(pipe, "min_flow", NaN)
         ref[name][id]["max_flow"] = get(pipe, "max_flow", NaN)
     end
@@ -136,13 +137,13 @@ function _add_deliveries_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any}
 end 
 
 function _add_nodes_incident_on_compressors!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
-    ref[:is_node_incident_on_compressor] = Dict{Int64,Bool}(
+    ref[:is_pressure_node] = Dict{Int64,Bool}(
         i => false for i in keys(ref[:node])
     )
 
     for (_, compressor) in get(ref, :compressor, [])
-        ref[:is_node_incident_on_compressor][compressor["to_node"]] = true 
-        ref[:is_node_incident_on_compressor][compressor["fr_node"]] = true 
+        ref[:is_pressure_node][compressor["to_node"]] = true 
+        ref[:is_pressure_node][compressor["fr_node"]] = true 
     end
 
 end 

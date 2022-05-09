@@ -3,6 +3,4 @@ function create_nlp!(sopt::SteadyOptimizer)
 
     _add_variables!(sopt, opt_model)
     _add_constraints!(sopt, opt_model)
-
-
 end 
