@@ -1,7 +1,6 @@
 function _parse_data(data_folder::AbstractString; 
     case_name::AbstractString="", 
     case_types::Vector{Symbol}=Symbol[])
-    metadata_file = data_folder * "metadata.json"
     network_file = data_folder * "network.json"
     params_file = data_folder * "params"
     nominations_file = data_folder * "nominations"
@@ -28,20 +27,19 @@ function _parse_data(data_folder::AbstractString;
             slack_pressure_file * ".json"
         end 
     
-    metadata = _parse_json(metadata_file)
     network_data = _parse_json(network_file)
     params_data = _parse_json(params_file)
     nominations_data = _parse_json(nominations_file)
     slack_pressure_data = _parse_json(slack_pressure_file)
 
-    return merge(metadata, network_data, params_data, nominations_data, slack_pressure_data)
+    return merge(network_data, params_data, nominations_data, slack_pressure_data)
 
     return data
 end 
 
 function _get_nominal_pressure(data::Dict{String,Any}, units)
     slack_pressures = []
-    for (_, value) in get(data, "slack_pressure", [])
+    for (_, value) in get(data, "slack_pressures", [])
         push!(slack_pressures, value)
     end 
 
@@ -65,7 +63,7 @@ function process_data!(data::Dict{String,Any})
 
     defaults_exhaustive = [288.706, 0.6, 1.4, 5000.0, NaN, NaN, NaN, 0]
 
-    optimization_params = data["optimization_params"]
+    optimization_params = data["params"]
     
     key_map = Dict{String,String}()
     for k in keys(optimization_params)
@@ -86,7 +84,7 @@ function process_data!(data::Dict{String,Any})
     end
 
     # populating parameters
-    for i in 1:length(params_exhaustive)
+    for i in eachindex(params_exhaustive)
         param = params_exhaustive[i]
         default = defaults_exhaustive[i]
         if param == "units"
