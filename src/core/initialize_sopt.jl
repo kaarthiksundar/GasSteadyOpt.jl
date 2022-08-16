@@ -48,11 +48,11 @@ function initialize_optimizer(data::Dict{String,Any};
     )
 
     # add additional bounds to ref
-    _add_nodal_potential_bounds_to_ref!(sopt)
-    _add_pipe_flow_bounds_to_ref!(sopt)
-    _add_compressor_flow_bounds_to_ref!(sopt)
+    # _add_nodal_potential_bounds_to_ref!(sopt)
+    # _add_pipe_flow_bounds_to_ref!(sopt)
+    # _add_compressor_flow_bounds_to_ref!(sopt)
 
-    (populate_nlp) && (create_nlp_model(sopt))
+    # (populate_nlp) && (create_nlp_model(sopt))
 
     return sopt
 end

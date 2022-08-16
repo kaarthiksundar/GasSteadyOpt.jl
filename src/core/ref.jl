@@ -6,11 +6,11 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         (!haskey(ref, name)) && (ref[name] = Dict())
         id = parse(Int64, i)
         ref[name][id] = Dict()
-        @assert id == node["node_id"]
+        @assert id == node["id"]
         ref[name][id]["id"] = id
         ref[name][id]["is_slack"] = node["slack_bool"]
         (node["slack_bool"] == 1) && (push!(ref[:slack_nodes], id))
-        ref[name][id]["slack_pressure"] = (node["slack_bool"] == 1) ? data["slack_pressure"][i] : NaN
+        ref[name][id]["slack_pressure"] = (node["slack_bool"] == 1) ? data["slack_pressures"][i] : NaN
         ref[name][id]["min_pressure"] = node["min_pressure"]
         ref[name][id]["max_pressure"] = node["max_pressure"]
         ref[name][id]["pressure"] = NaN
@@ -23,9 +23,9 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         (!haskey(ref, name)) && (ref[name] = Dict())
         id = parse(Int64, i)
         ref[name][id] = Dict()
-        @assert id == pipe["pipe_id"]
+        @assert id == pipe["id"]
         ref[name][id]["id"] = id
-        ref[name][id]["fr_node"] = pipe["from_node"]
+        ref[name][id]["fr_node"] = pipe["fr_node"]
         ref[name][id]["to_node"] = pipe["to_node"]
         ref[name][id]["diameter"] = pipe["diameter"]
         ref[name][id]["area"] = pipe["area"]
@@ -41,15 +41,15 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         (!haskey(ref, name)) && (ref[name] = Dict())
         id = parse(Int64, i)
         ref[name][id] = Dict()
-        @assert id == compressor["compressor_id"]
+        @assert id == compressor["id"]
         ref[name][id]["id"] = id
         ref[name][id]["to_node"] = compressor["to_node"]
-        ref[name][id]["fr_node"] = compressor["from_node"]
+        ref[name][id]["fr_node"] = compressor["fr_node"]
         ref[name][id]["flow"] = NaN
-        ref[name][id]["min_c_ratio"] = compressor["c_ratio_min"]
-        ref[name][id]["max_c_ratio"] = compressor["c_ratio_max"]
-        ref[name][id]["min_flow"] = get(pipe, "min_flow", NaN)
-        ref[name][id]["max_flow"] = get(pipe, "max_flow", NaN)
+        ref[name][id]["min_c_ratio"] = compressor["min_c_ratio"]
+        ref[name][id]["max_c_ratio"] = compressor["max_c_ratio"]
+        ref[name][id]["min_flow"] = get(compressor, "min_flow", NaN)
+        ref[name][id]["max_flow"] = get(compressor, "max_flow", NaN)
     end
 
     for (i, receipt) in get(data, "receipts", [])
@@ -57,10 +57,10 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         (!haskey(ref, name)) && (ref[name] = Dict())
         id = parse(Int64, i)
         ref[name][id] = Dict()
-        @assert id == receipt["receipt_id"]
+        @assert id == receipt["id"]
         ref[name][id]["id"] = id
-        ref[name][id]["node_id"] = receipt["node_id"]
-        ref[name][id]["min_injection"] = 0.0
+        ref[name][id]["id"] = receipt["id"]
+        ref[name][id]["min_injection"] = data["receipt_nominations"][i]["min_injection"]
         ref[name][id]["max_injection"] = data["receipt_nominations"][i]["max_injection"]
         ref[name][id]["cost"] = data["receipt_nominations"][i]["cost"]
         ref[name][id]["injection"] = NaN
@@ -71,10 +71,10 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         (!haskey(ref, name)) && (ref[name] = Dict())
         id = parse(Int64, i)
         ref[name][id] = Dict()
-        @assert id == delivery["delivery_id"]
+        @assert id == delivery["id"]
         ref[name][id]["id"] = id
-        ref[name][id]["node_id"] = delivery["node_id"]
-        ref[name][id]["min_withdrawal"] = 0.0
+        ref[name][id]["id"] = delivery["id"]
+        ref[name][id]["min_withdrawal"] = data["delivery_nominations"][i]["min_withdrawal"]
         ref[name][id]["max_withdrawal"] = data["delivery_nominations"][i]["max_withdrawal"]
         ref[name][id]["cost"] = data["delivery_nominations"][i]["cost"]
         ref[name][id]["withdrawal"] = NaN
@@ -120,7 +120,7 @@ function _add_receipts_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
     )
 
     for (id, receipt) in get(ref, :receipt, [])
-        push!(ref[:receipts_at_node][receipt["node_id"]], id)
+        push!(ref[:receipts_at_node][receipt["id"]], id)
     end 
     return
 end 
@@ -131,7 +131,7 @@ function _add_deliveries_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any}
     )
 
     for (id, delivery) in get(ref, :delivery, [])
-        push!(ref[:deliveries_at_node][delivery["node_id"]], id)
+        push!(ref[:deliveries_at_node][delivery["id"]], id)
     end 
     return
 end 

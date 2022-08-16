@@ -5,6 +5,7 @@ function _parse_data(data_folder::AbstractString;
     params_file = data_folder * "params"
     nominations_file = data_folder * "nominations"
     slack_pressure_file = data_folder * "slack_pressures"
+    decision_group_file = data_folder * "decision_groups.json"
 
     params_file = 
         if (:params in case_types) 
@@ -31,10 +32,20 @@ function _parse_data(data_folder::AbstractString;
     params_data = _parse_json(params_file)
     nominations_data = _parse_json(nominations_file)
     slack_pressure_data = _parse_json(slack_pressure_file)
+    decision_group_data = _parse_json(decision_group_file)
 
-    return merge(network_data, params_data, nominations_data, slack_pressure_data)
-
-    return data
+    if (isempty(decision_group_data))
+        return merge(network_data, 
+        params_data, 
+        nominations_data, 
+        slack_pressure_data)
+    end  
+    
+    return merge(network_data, 
+        params_data, 
+        nominations_data, 
+        slack_pressure_data, 
+        decision_group_data)
 end 
 
 function _get_nominal_pressure(data::Dict{String,Any}, units)
@@ -112,7 +123,7 @@ function process_data!(data::Dict{String,Any})
         
         key = get(key_map, param, false)
         if key != false
-            value = simulation_params[key]
+            value = optimization_params[key]
             params[Symbol(param)] = value
         else
             params[Symbol(param)] = default

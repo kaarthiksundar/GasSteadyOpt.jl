@@ -19,9 +19,9 @@ include("core/bounds.jl")
 include("core/ref.jl")
 include("core/sol.jl")
 
-include("form/variables.jl")
-include("form/constraints.jl")
-include("form/nlp.jl")
+# include("form/variables.jl")
+# include("form/constraints.jl")
+# include("form/nlp.jl")
 
 include("core/initialize_sopt.jl")
 

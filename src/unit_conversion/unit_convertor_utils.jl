@@ -51,38 +51,78 @@ function _get_data_units(rescale_functions)::Dict{Symbol,Any}
     node_units = Dict{String,Function}(
         "min_pressure" => rescale_pressure,
         "max_pressure" => rescale_pressure,  
+        "elevation" => rescale_length,
     )
 
     pipe_units = Dict{String,Function}(
         "diameter" => rescale_diameter,
         "length" => rescale_length,
         "area" => rescale_area,
-        "min_flow" => rescale_flow, 
-        "max_flow" => rescale_flow
+        "min_flow" => rescale_mass_flow, 
+        "max_flow" => rescale_mass_flow,
+        "min_pressure" => rescale_pressure,
+        "max_pressure" => rescale_pressure
     )
 
     compressor_units = Dict{String,Any}(
-        "min_flow" => rescale_flow, 
-        "max_flow" => rescale_flow
+        "min_flow" => rescale_mass_flow, 
+        "max_flow" => rescale_mass_flow
+    )
+
+    control_valve_units = Dict{String,Any}(
+        "min_flow" => rescale_mass_flow, 
+        "max_flow" => rescale_mass_flow,
+        "min_pressure_differential" => rescale_pressure,
+        "max_pressure_differential" => rescale_pressure
+    )
+
+    short_pipe_units = Dict{String,Any}(
+        "min_flow" => rescale_mass_flow, 
+        "max_flow" => rescale_mass_flow
+    )
+
+    valve_units = Dict{String,Any}(
+        "min_flow" => rescale_mass_flow, 
+        "max_flow" => rescale_mass_flow,
+        "max_pressure_differential" => rescale_pressure
+    )
+
+    resistor_units = Dict{String,Any}(
+        "min_flow" => rescale_mass_flow, 
+        "max_flow" => rescale_mass_flow,
+        "diameter" => rescale_length
+    )
+
+    loss_resistor_units = Dict{String,Any}(
+        "min_flow" => rescale_mass_flow, 
+        "max_flow" => rescale_mass_flow,
+        "pressure_loss" => rescale_pressure
     )
 
     receipt_nomination_units = Dict{String,Function}(
+        "min_injection" => rescale_mass_flow,
         "max_injection" => rescale_mass_flow,
         "cost" => rescale_cost
     )
 
     delivery_nomination_units = Dict{String,Function}(
+        "min_withdrawal" => rescale_mass_flow,
         "max_withdrawal" => rescale_mass_flow,
         "cost" => rescale_cost
     )
 
     slack_pressure_units = Dict{String,Any}(
-        "slack_pressure" => rescale_pressure
+        "slack_pressures" => rescale_pressure
     )
 
     units[:node_units] = node_units
     units[:pipe_units] = pipe_units
     units[:compressor_units] = compressor_units
+    units[:control_valve_units] = control_valve_units 
+    units[:valve_units] = valve_units
+    units[:resistor_units] = resistor_units
+    units[:loss_resistor_units] = loss_resistor_units
+    units[:short_pipe_units] = short_pipe_units
     units[:receipt_nomination_units] = receipt_nomination_units
     units[:delivery_nomination_units] = delivery_nomination_units
     units[:slack_pressure_units] = slack_pressure_units
@@ -97,6 +137,11 @@ function _rescale_data!(data::Dict{String,Any},
     node_units = units[:node_units]
     pipe_units = units[:pipe_units]
     compressor_units = units[:compressor_units]
+    control_valve_units = units[:control_valve_units]
+    valve_units = units[:valve_units]
+    resistor_units = units[:resistor_units]
+    loss_resistor_units = units[:loss_resistor_units]
+    short_pipe_units = units[:short_pipe_units]
     receipt_nomination_units = units[:receipt_nomination_units] 
     delivery_nomination_units = units[:delivery_nomination_units]
     slack_pressure_units = units[:slack_pressure_units]
@@ -129,9 +174,49 @@ function _rescale_data!(data::Dict{String,Any},
 
     for (_, compressor) in get(data, "compressors", [])
         for (param, f) in compressor_units
-            (!haskey(pipe, param)) && (continue)
+            (!haskey(compressor, param)) && (continue)
             value = compressor[param]
             compressor[param] = f(value)
+        end 
+    end 
+
+    for (_, control_valve) in get(data, "control_valves", [])
+        for (param, f) in control_valve_units
+            (!haskey(control_valve, param)) && (continue)
+            value = control_valve[param]
+            control_valve[param] = f(value)
+        end 
+    end 
+
+    for (_, valve) in get(data, "valves", [])
+        for (param, f) in valve_units
+            (!haskey(valve, param)) && (continue)
+            value = valve[param]
+            valve[param] = f(value)
+        end 
+    end 
+
+    for (_, short_pipe) in get(data, "short_pipes", [])
+        for (param, f) in short_pipe_units
+            (!haskey(short_pipe, param)) && (continue)
+            value = short_pipe[param]
+            short_pipe[param] = f(value)
+        end 
+    end 
+
+    for (_, resistor) in get(data, "resistors", [])
+        for (param, f) in resistor_units
+            (!haskey(resistor, param)) && (continue)
+            value = resistor[param]
+            resistor[param] = f(value)
+        end 
+    end 
+
+    for (_, loss_resistor) in get(data, "loss_resistors", [])
+        for (param, f) in loss_resistor_units
+            (!haskey(loss_resistor, param)) && (continue)
+            value = loss_resistor[param]
+            loss_resistor[param] = f(value)
         end 
     end 
     
@@ -150,7 +235,7 @@ function _rescale_data!(data::Dict{String,Any},
     end 
 
     for (i, value) in get(data, "slack_pressure", [])
-        data["slack_pressure"][i] = slack_pressure_units["slack_pressure"](value)
+        data["slack_pressures"][i] = slack_pressure_units["slack_pressure"](value)
     end 
 
 end
