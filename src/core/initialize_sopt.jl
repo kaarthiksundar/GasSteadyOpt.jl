@@ -22,9 +22,15 @@ function initialize_optimizer(data::Dict{String,Any};
     ref = build_ref(data, ref_extensions= [
         _add_pipe_info_at_nodes!,
         _add_compressor_info_at_nodes!,
+        _add_control_valve_info_at_nodes!,
+        _add_valve_info_at_nodes!,
+        _add_resistor_info_at_nodes!,
+        _add_loss_resistor_info_at_nodes!,
+        _add_short_pipe_info_at_nodes!,
         _add_receipts_at_nodes!,
         _add_deliveries_at_nodes!,
-        _add_nodes_incident_on_compressors!
+        _add_decision_groups!
+        # _add_nodes_incident_on_compressors!
         ]
     )
 
@@ -47,10 +53,6 @@ function initialize_optimizer(data::Dict{String,Any};
         _get_eos(eos)...
     )
 
-    # add additional bounds to ref
-    # _add_nodal_potential_bounds_to_ref!(sopt)
-    # _add_pipe_flow_bounds_to_ref!(sopt)
-    # _add_compressor_flow_bounds_to_ref!(sopt)
 
     # (populate_nlp) && (create_nlp_model(sopt))
 

@@ -13,9 +13,6 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["slack_pressure"] = (node["slack_bool"] == 1) ? data["slack_pressures"][i] : NaN
         ref[name][id]["min_pressure"] = node["min_pressure"]
         ref[name][id]["max_pressure"] = node["max_pressure"]
-        ref[name][id]["pressure"] = NaN
-        ref[name][id]["density"] = NaN
-        ref[name][id]["potential"] = NaN
     end
 
     for (i, pipe) in get(data, "pipes", [])
@@ -31,7 +28,6 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["area"] = pipe["area"]
         ref[name][id]["length"] = pipe["length"]
         ref[name][id]["friction_factor"] = pipe["friction_factor"]
-        ref[name][id]["flow"] = NaN
         ref[name][id]["min_flow"] = get(pipe, "min_flow", NaN)
         ref[name][id]["max_flow"] = get(pipe, "max_flow", NaN)
     end
@@ -45,12 +41,84 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["id"] = id
         ref[name][id]["to_node"] = compressor["to_node"]
         ref[name][id]["fr_node"] = compressor["fr_node"]
-        ref[name][id]["flow"] = NaN
         ref[name][id]["min_c_ratio"] = compressor["min_c_ratio"]
         ref[name][id]["max_c_ratio"] = compressor["max_c_ratio"]
         ref[name][id]["min_flow"] = get(compressor, "min_flow", NaN)
         ref[name][id]["max_flow"] = get(compressor, "max_flow", NaN)
+        ref[name][id]["internal_bypass_required"] = get(compressor, "internal_bypass_required", 0)
     end
+
+    for (i, control_valve) in get(data, "control_valves", [])
+        name = :control_valve
+        (!haskey(ref, name)) && (ref[name] = Dict())
+        id = parse(Int64, i)
+        ref[name][id] = Dict()
+        @assert id == control_valve["id"]
+        ref[name][id]["id"] = id
+        ref[name][id]["fr_node"] = control_valve["fr_node"]
+        ref[name][id]["to_node"] = control_valve["to_node"]
+        ref[name][id]["min_flow"] = get(control_valve, "min_flow", NaN)
+        ref[name][id]["max_flow"] = get(control_valve, "max_flow", NaN)
+        ref[name][id]["internal_bypass_required"] = get(control_valve, "internal_bypass_required", 0)
+        ref[name][id]["max_pressure_differential"] = control_valve["max_pressure_differential"]
+        ref[name][id]["min_pressure_differential"] = control_valve["min_pressure_differential"]
+    end 
+
+    for (i, valve) in get(data, "valves", [])
+        name = :valve
+        (!haskey(ref, name)) && (ref[name] = Dict())
+        id = parse(Int64, i)
+        ref[name][id] = Dict()
+        @assert id == valve["id"]
+        ref[name][id]["id"] = id
+        ref[name][id]["fr_node"] = valve["fr_node"]
+        ref[name][id]["to_node"] = valve["to_node"]
+        ref[name][id]["min_flow"] = get(valve, "min_flow", NaN)
+        ref[name][id]["max_flow"] = get(valve, "max_flow", NaN)
+        ref[name][id]["max_pressure_differential"] = get(valve, "max_pressure_differential", NaN)
+    end 
+
+    for (i, short_pipe) in get(data, "short_pipes", [])
+        name = :short_pipe
+        (!haskey(ref, name)) && (ref[name] = Dict())
+        id = parse(Int64, i)
+        ref[name][id] = Dict()
+        @assert id == short_pipe["id"]
+        ref[name][id]["id"] = id
+        ref[name][id]["fr_node"] = short_pipe["fr_node"]
+        ref[name][id]["to_node"] = short_pipe["to_node"]
+        ref[name][id]["min_flow"] = get(short_pipe, "min_flow", NaN)
+        ref[name][id]["max_flow"] = get(short_pipe, "max_flow", NaN)
+    end 
+
+    for (i, resistor) in get(data, "resistors", [])
+        name = :resistor
+        (!haskey(ref, name)) && (ref[name] = Dict())
+        id = parse(Int64, i)
+        ref[name][id] = Dict()
+        @assert id == resistor["id"]
+        ref[name][id]["id"] = id
+        ref[name][id]["fr_node"] = resistor["fr_node"]
+        ref[name][id]["to_node"] = resistor["to_node"]
+        ref[name][id]["min_flow"] = get(resistor, "min_flow", NaN)
+        ref[name][id]["max_flow"] = get(resistor, "max_flow", NaN)
+        ref[name][id]["drag"] = resistor["drag"]
+        ref[name][id]["diameter"] = resistor["diameter"]
+    end 
+
+    for (i, loss_resistor) in get(data, "loss_resistors", [])
+        name = :loss_resistor
+        (!haskey(ref, name)) && (ref[name] = Dict())
+        id = parse(Int64, i)
+        ref[name][id] = Dict()
+        @assert id == loss_resistor["id"]
+        ref[name][id]["id"] = id
+        ref[name][id]["fr_node"] = loss_resistor["fr_node"]
+        ref[name][id]["to_node"] = loss_resistor["to_node"]
+        ref[name][id]["min_flow"] = get(loss_resistor, "min_flow", NaN)
+        ref[name][id]["max_flow"] = get(loss_resistor, "max_flow", NaN)
+        ref[name][id]["pressure_loss"] = loss_resistor["pressure_loss"]
+    end 
 
     for (i, receipt) in get(data, "receipts", [])
         name = :receipt 
@@ -59,11 +127,10 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id] = Dict()
         @assert id == receipt["id"]
         ref[name][id]["id"] = id
-        ref[name][id]["id"] = receipt["id"]
+        ref[name][id]["node_id"] = receipt["node_id"]
         ref[name][id]["min_injection"] = data["receipt_nominations"][i]["min_injection"]
         ref[name][id]["max_injection"] = data["receipt_nominations"][i]["max_injection"]
         ref[name][id]["cost"] = data["receipt_nominations"][i]["cost"]
-        ref[name][id]["injection"] = NaN
     end 
 
     for (i, delivery) in get(data, "deliveries", [])
@@ -73,15 +140,49 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id] = Dict()
         @assert id == delivery["id"]
         ref[name][id]["id"] = id
-        ref[name][id]["id"] = delivery["id"]
+        ref[name][id]["node_id"] = delivery["node_id"] 
         ref[name][id]["min_withdrawal"] = data["delivery_nominations"][i]["min_withdrawal"]
         ref[name][id]["max_withdrawal"] = data["delivery_nominations"][i]["max_withdrawal"]
         ref[name][id]["cost"] = data["delivery_nominations"][i]["cost"]
-        ref[name][id]["withdrawal"] = NaN
     end 
-
     return
 end
+
+function _add_decision_groups!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    for (i, dg) in get(data, "decision_groups", [])
+        name = :decision_group 
+        (!haskey(ref, name)) && (ref[name] = Dict())
+        id = parse(Int64, i)
+        ref[name][id] = Dict()
+        ref[name][id]["decisions"] = Dict()
+        ref[name][id]["num_decisions"] = length(dg["decisions"])
+        for (j, dec) in get(dg, "decisions", [])
+            id_j = parse(Int64, j)
+            ref[name][id]["decisions"][id_j] = Dict()
+            for entry in dec 
+                for (key, value) in entry
+                    (key == "component_type" || key == "id") && (continue)  
+                    component_type = Symbol(entry["component_type"])
+                    component_id = entry["id"]
+                    new_key = (component_type, component_id)
+                    if (!haskey(ref[name][id]["decisions"][id_j], new_key))
+                        ref[name][id]["decisions"][id_j][new_key] = Dict()
+                    end 
+                    if key == "value"
+                        ref[name][id]["decisions"][id_j][new_key]["on_off"] = 
+                            Bool(parse(Int64, value)) 
+                    elseif key == "flow_direction"
+                        ref[name][id]["decisions"][id_j][new_key][key] = 
+                            parse(Int64, value)
+                    else 
+                        ref[name][id]["decisions"][id_j][new_key][key] = value
+                    end
+                end                
+            end 
+
+        end 
+    end 
+end 
 
 
 function _add_pipe_info_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
@@ -114,6 +215,82 @@ function _add_compressor_info_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String
     return
 end
 
+function _add_control_valve_info_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:incoming_control_valves] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
+    ref[:outgoing_control_valves] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
+
+    for (id, control_valve) in get(ref, :control_valve, [])
+        push!(ref[:incoming_control_valves][control_valve["to_node"]], id)
+        push!(ref[:outgoing_control_valves][control_valve["fr_node"]], id)
+    end
+    return
+end
+
+function _add_valve_info_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:incoming_valves] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
+    ref[:outgoing_valves] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
+    
+    for (id, valve) in get(ref, :valve, [])
+        push!(ref[:incoming_valves][valve["to_node"]], id)
+        push!(ref[:outgoing_valves][valve["fr_node"]], id)
+    end
+    return
+end
+
+function _add_resistor_info_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:incoming_resistors] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
+    ref[:outgoing_resistors] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
+    
+    for (id, resistor) in get(ref, :resistor, [])
+        push!(ref[:incoming_resistors][resistor["to_node"]], id)
+        push!(ref[:outgoing_resistors][resistor["fr_node"]], id)
+    end
+    return
+end
+
+function _add_loss_resistor_info_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:incoming_loss_resistors] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
+    ref[:outgoing_loss_resistors] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
+    
+    for (id, loss_resistor) in get(ref, :loss_resistor, [])
+        push!(ref[:incoming_loss_resistors][loss_resistor["to_node"]], id)
+        push!(ref[:outgoing_loss_resistors][loss_resistor["fr_node"]], id)
+    end
+    return
+end
+
+function _add_short_pipe_info_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:incoming_short_pipes] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
+    ref[:outgoing_short_pipes] = Dict{Int64, Vector{Int64}}(
+        i => [] for i in keys(ref[:node])
+    )
+
+    for (id, short_pipe) in get(ref, :short_pipe, [])
+        push!(ref[:incoming_short_pipes][short_pipe["to_node"]], id)
+        push!(ref[:outgoing_short_pipes][short_pipe["fr_node"]], id)
+    end
+    return
+end
+
+
 function _add_receipts_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
     ref[:receipts_at_node] = Dict{Int64, Vector{Int64}}(
         i => [] for i in keys(ref[:node])
@@ -136,17 +313,17 @@ function _add_deliveries_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any}
     return
 end 
 
-function _add_nodes_incident_on_compressors!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
-    ref[:is_pressure_node] = Dict{Int64,Bool}(
-        i => false for i in keys(ref[:node])
-    )
+# function _add_nodes_incident_on_compressors!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+#     ref[:is_pressure_node] = Dict{Int64,Bool}(
+#         i => false for i in keys(ref[:node])
+#     )
 
-    for (_, compressor) in get(ref, :compressor, [])
-        ref[:is_pressure_node][compressor["to_node"]] = true 
-        ref[:is_pressure_node][compressor["fr_node"]] = true 
-    end
+#     for (_, compressor) in get(ref, :compressor, [])
+#         ref[:is_pressure_node][compressor["to_node"]] = true 
+#         ref[:is_pressure_node][compressor["fr_node"]] = true 
+#     end
+# end 
 
-end 
 
 
 function build_ref(data::Dict{String,Any};
