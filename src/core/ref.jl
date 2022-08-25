@@ -179,9 +179,15 @@ function _add_decision_groups!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
                     end
                 end                
             end 
-
         end 
     end 
+    for (i, dg) in ref[:decision_group]
+        components = collect(keys(dg["decisions"][1]))
+        dg["compressors"] = map(it -> last(it), filter(it -> first(it) == :compressor, components))
+        dg["valves"] = map(it -> last(it), filter(it -> first(it) == :valve, components))
+        dg["control_valves"] =  map(it -> last(it), filter(it -> first(it) == :control_valve, components))
+        dg["num_components"] = length(components)
+    end     
 end 
 
 
