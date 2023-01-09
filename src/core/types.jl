@@ -1,36 +1,9 @@
-export MODEL_TYPE, OBJECTIVE_TYPE
-
-@enum MODEL_TYPE begin 
-    unknown_model = 0
-    nlp = 1
-    lp_relaxation = 2 
-    milp_relaxation = 3
-end
-
-@enum OBJECTIVE_TYPE begin 
-    unknown_obj = 0
-    profit = 1
-    power_surrogate = 2
-end 
-
 struct OptModel 
     model::JuMP.AbstractModel
     variables::Dict{Symbol,Any}
-    model_type::MODEL_TYPE 
-    objective_type::OBJECTIVE_TYPE
 end 
 
-OptModel(model_type::MODEL_TYPE, objective_type::OBJECTIVE_TYPE) = OptModel(JuMP.Model(), 
-        Dict{Symbol,Any}(), model_type, objective_type)
-
-
-OptModel(model_type::MODEL_TYPE) = OptModel(JuMP.Model(), 
-    Dict{Symbol,Any}(), model_type, unknown_obj
-)
-
-OptModel() = OptModel(JuMP.Model(), 
-    Dict{Symbol,Any}(), unknown_model, unknown_obj)
-
+OptModel() = OptModel(JuMP.Model(), Dict{Symbol,Any}())
 
 struct SteadyOptimizer
     data::Dict{String,Any}
@@ -38,10 +11,7 @@ struct SteadyOptimizer
     sol::Dict{String,Any}
     nominal_values::Dict{Symbol,Any}
     params::Dict{Symbol,Any}
-    nlp::OptModel 
-    nlp_relaxation::OptModel
-    min_power_relaxation::OptModel
-    bt::OptModel
+    linear_relaxation::OptModel
     relaxation_options::Dict{Symbol,Any}
     pu_eos_coeffs::Function
     pu_pressure_to_pu_density::Function
