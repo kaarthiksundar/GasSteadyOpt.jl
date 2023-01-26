@@ -1,0 +1,3 @@
+[submodule "GasLib-data"]
+	path = GasLib-data
+	url = https://github.com/kaarthiksundar/GasLib.git
