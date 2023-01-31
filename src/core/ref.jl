@@ -1,6 +1,6 @@
 function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
 
-    ref[:slack_nodes] = []
+    ref[:slack_nodes] = isa(data["slack_node"], AbstractString) ? [parse(Int64, data["slack_node"])] : map(x -> parse(Int64, x), data["slack_node"])
     for (i, node) in get(data, "nodes", [])
         name = :node
         (!haskey(ref, name)) && (ref[name] = Dict())
@@ -8,9 +8,8 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id] = Dict()
         @assert id == node["id"]
         ref[name][id]["id"] = id
-        ref[name][id]["is_slack"] = node["slack_bool"]
-        (node["slack_bool"] == 1) && (push!(ref[:slack_nodes], id))
-        ref[name][id]["slack_pressure"] = (node["slack_bool"] == 1) ? data["slack_pressures"][i] : NaN
+        ref[name][id]["is_slack"] = id in ref[:slack_nodes]
+        ref[name][id]["slack_pressure"] = (id in ref[:slack_nodes]) ? data["slack_pressure"] : NaN
         ref[name][id]["min_pressure"] = node["min_pressure"]
         ref[name][id]["max_pressure"] = node["max_pressure"]
     end
@@ -181,7 +180,7 @@ function _add_decision_groups!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
             end 
         end 
     end 
-    for (i, dg) in ref[:decision_group]
+    for (_, dg) in get(ref, :decision_group, [])
         components = collect(keys(dg["decisions"][1]))
         dg["compressors"] = map(it -> last(it), filter(it -> first(it) == :compressor, components))
         dg["valves"] = map(it -> last(it), filter(it -> first(it) == :valve, components))

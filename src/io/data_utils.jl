@@ -1,10 +1,12 @@
-function _parse_data(data_folder::AbstractString; 
+function _parse_data(data_folder::AbstractString, 
+    nomination_case::AbstractString; 
+    slack_pressure::Float64=NaN,
     case_name::AbstractString="", 
     case_types::Vector{Symbol}=Symbol[])
     network_file = data_folder * "network.json"
     params_file = data_folder * "params"
     nominations_file = data_folder * "nominations"
-    slack_pressure_file = data_folder * "slack_pressures"
+    slack_nodes_file = data_folder * "slack_nodes"
     decision_group_file = data_folder * "decision_groups.json"
 
     params_file = 
@@ -21,42 +23,47 @@ function _parse_data(data_folder::AbstractString;
             nominations_file * ".json"
         end 
 
-    slack_pressure_file = 
-        if (:slack_pressures in case_types) 
-            slack_pressure_file * "_" * case_name * ".json"
+    slack_nodes_file = 
+        if (:slack_nodes in case_types) 
+            slack_nodes_file * "_" * case_name * ".json"
         else 
-            slack_pressure_file * ".json"
+            slack_nodes_file * ".json"
         end 
     
     network_data = _parse_json(network_file)
     params_data = _parse_json(params_file)
-    nominations_data = _parse_json(nominations_file)
-    slack_pressure_data = _parse_json(slack_pressure_file)
+    nominations = _parse_json(nominations_file)
+    slack_nodes = _parse_json(slack_nodes_file)
+    if !haskey(nominations, nomination_case) || !haskey(slack_nodes, nomination_case)
+        error("the nominations case \"$nomination_case\" is not present in the nominations or the slack nodes files")
+    end 
+    nominations_data = nominations[nomination_case]
+    slack_nodes_data = Dict{String,Any}("slack_node" => slack_nodes[nomination_case])
     decision_group_data = _parse_json(decision_group_file)
+    slack_pressure_data = Dict{String,Any}("slack_pressure" => slack_pressure)
 
     if (isempty(decision_group_data))
         return merge(network_data, 
         params_data, 
         nominations_data, 
+        slack_nodes_data, 
         slack_pressure_data)
     end  
     
     return merge(network_data, 
         params_data, 
         nominations_data, 
-        slack_pressure_data, 
+        slack_nodes_data, 
+        slack_pressure_data,
         decision_group_data)
 end 
 
 function _get_nominal_pressure(data::Dict{String,Any}, units)
-    slack_pressures = []
-    for (_, value) in get(data, "slack_pressures", [])
-        push!(slack_pressures, value)
+    if isnan(data["slack_pressure"])
+        data["slack_pressure"] = data["nodes"][data["slack_node"]]["max_pressure"]
     end 
-
-    @assert length(slack_pressures) != 0
-    (units == 1) && (return minimum(slack_pressures) *  6894.75729)
-    return minimum(slack_pressures)
+    (units == 1) && (return data["slack_pressure"] *  6894.75729)
+    return data["slack_pressure"]
 end 
 
 function process_data!(data::Dict{String,Any})

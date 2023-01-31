@@ -1,8 +1,11 @@
-function initialize_optimizer(data_folder::AbstractString;
+function initialize_optimizer(data_folder::AbstractString, 
+    nomination_case::AbstractString;
     case_name::AbstractString="", 
     case_types::Vector{Symbol}=Symbol[],
+    slack_pressure::Float64 = NaN,
     kwargs...)::SteadyOptimizer
-    data = _parse_data(data_folder; 
+    data = _parse_data(data_folder, nomination_case; 
+        slack_pressure=slack_pressure,
         case_name=case_name, 
         case_types=case_types
     )
@@ -10,12 +13,8 @@ function initialize_optimizer(data_folder::AbstractString;
 end
 
 function initialize_optimizer(data::Dict{String,Any}; 
-    eos::Symbol=:ideal, 
-    populate_nlp::Bool=true, 
-    relaxation_type::Symbol=:lp, 
-    perform_obbt::Bool=false, 
-    obbt_relaxation_type::Symbol=:lp
-    )::SteadyOptimizer
+    eos::Symbol=:ideal)::SteadyOptimizer
+    # process data
     params, nominal_values = process_data!(data)
     make_per_unit!(data, params, nominal_values)
     # create ref 
@@ -34,10 +33,6 @@ function initialize_optimizer(data::Dict{String,Any};
         ]
     )
 
-    # create relaxation types
-    relaxation = (relaxation_type == :lp) ? lp_relaxation : unknown_model
-    obbt_relaxation = (obbt_relaxation_type == :lp) ? lp_relaxation : unknown_model
-
     # construction optimizer object
     sopt = SteadyOptimizer(
         data, 
@@ -45,16 +40,10 @@ function initialize_optimizer(data::Dict{String,Any};
         _initialize_solution(data), 
         nominal_values, 
         params, 
-        (populate_nlp) ? OptModel(nlp, profit) : OptModel(), 
-        OptModel(relaxation, profit), 
-        OptModel(relaxation, power_surrogate),
-        (perform_obbt) ? OptModel(obbt_relaxation) : OptModel(),
+        OptModel(), 
         Dict{Symbol,Any}(),
         _get_eos(eos)...
     )
-
-
-    # (populate_nlp) && (create_nlp_model(sopt))
 
     return sopt
 end

@@ -112,7 +112,7 @@ function _get_data_units(rescale_functions)::Dict{Symbol,Any}
     )
 
     slack_pressure_units = Dict{String,Any}(
-        "slack_pressures" => rescale_pressure
+        "slack_pressure" => rescale_pressure
     )
 
     units[:node_units] = node_units
@@ -234,8 +234,8 @@ function _rescale_data!(data::Dict{String,Any},
         end 
     end 
 
-    for (i, value) in get(data, "slack_pressure", [])
-        data["slack_pressures"][i] = slack_pressure_units["slack_pressure"](value)
+    for value in get(data, "slack_pressure", NaN)
+        data["slack_pressure"] = slack_pressure_units["slack_pressure"](value)
     end 
 
 end
