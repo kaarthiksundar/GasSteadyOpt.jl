@@ -12,6 +12,7 @@ struct SteadyOptimizer
     nominal_values::Dict{Symbol,Any}
     params::Dict{Symbol,Any}
     linear_relaxation::OptModel
+    nonlinear_full_model::OptModel
     relaxation_options::Dict{Symbol,Any}
     pu_eos_coeffs::Function
     pu_pressure_to_pu_density::Function

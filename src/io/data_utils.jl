@@ -3,6 +3,30 @@ function _parse_data(data_folder::AbstractString,
     slack_pressure::Float64=NaN,
     case_name::AbstractString="", 
     case_types::Vector{Symbol}=Symbol[])
+    
+    # check for zip file
+    if endswith(data_folder, ".zip")
+        zip_reader = ZipFile.Reader(data_folder) 
+        file_paths = [x.name for x in zip_reader.files]
+        fids = _get_fids(file_paths, case_name, case_types)
+        network_data = _parse_json_file_from_zip(zip_reader, fids.network)
+        params_data = _parse_json_file_from_zip(zip_reader, fids.params)
+        nominations = _parse_json_file_from_zip(zip_reader, fids.nominations)
+        slack_nodes = _parse_json_file_from_zip(zip_reader, fids.slack_nodes)
+        if !haskey(nominations, nomination_case) || !haskey(slack_nodes, nomination_case)
+            error("the nominations case \"$nomination_case\" is not present in the nominations or the slack nodes files")
+        end 
+        nominations_data = nominations[nomination_case]
+        slack_nodes_data = Dict{String,Any}("slack_node" => slack_nodes[nomination_case])
+        decision_group_data = (!isnothing(fids.decision_group)) ? _parse_json_file_from_zip(zip_reader, fids.decision_groups) : Dict{String,Any}()
+        slack_pressure_data = Dict{String,Any}("slack_pressure" => slack_pressure)
+        if (isempty(decision_group_data))
+            return merge(network_data, params_data, nominations_data, slack_nodes_data, slack_pressure_data)
+        end  
+        
+        return merge(network_data, params_data, nominations_data, slack_nodes_data, slack_pressure_data, decision_group_data)
+    end
+
     network_file = data_folder * "network.json"
     params_file = data_folder * "params"
     nominations_file = data_folder * "nominations"
@@ -29,7 +53,7 @@ function _parse_data(data_folder::AbstractString,
         else 
             slack_nodes_file * ".json"
         end 
-    
+
     network_data = _parse_json(network_file)
     params_data = _parse_json(params_file)
     nominations = _parse_json(nominations_file)
@@ -56,6 +80,42 @@ function _parse_data(data_folder::AbstractString,
         slack_nodes_data, 
         slack_pressure_data,
         decision_group_data)
+end 
+
+function _get_fids(file_paths::Vector, 
+    case_name::AbstractString, 
+    case_types::Vector{Symbol}
+)::NamedTuple 
+    network_fid = findfirst(x -> occursin("network.json", x), file_paths)
+    
+    params_file_match_str = 
+        if (:params in case_types) 
+            "params_" * case_name * ".json"
+        else 
+            "params.json"
+        end
+    params_fid = findfirst(x -> occursin(params_file_match_str, x), file_paths)
+    
+    nominations_file_match_str = 
+        if (:nominations in case_types)
+            "nominations_" * case_name * ".json"
+        else 
+            "nominations.json"
+        end 
+    nominations_fid = findfirst(x -> occursin(nominations_file_match_str, x), file_paths)
+    
+    slack_nodes_file_match_str = 
+        if (:slack_nodes in case_types) 
+            "slack_nodes_" * case_name * ".json"
+        else 
+            "slack_nodes.json"
+        end 
+    slack_nodes_fid = findfirst(x -> occursin(slack_nodes_file_match_str, x), file_paths)
+
+    decision_group_fid = findfirst(x -> occursin("decision_groups.json", x), file_paths)
+
+    return (network = network_fid, params = params_fid, nominations = nominations_fid, 
+        slack_nodes = slack_nodes_fid, decision_group = decision_group_fid)
 end 
 
 function _get_nominal_pressure(data::Dict{String,Any}, units)

@@ -1,6 +1,7 @@
 # module GasSteadyOpt
 
 import JSON
+import ZipFile
 using JuMP
 using PolyhedralRelaxations
 

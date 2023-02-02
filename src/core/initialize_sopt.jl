@@ -41,6 +41,7 @@ function initialize_optimizer(data::Dict{String,Any};
         nominal_values, 
         params, 
         OptModel(), 
+        OptModel(),
         Dict{Symbol,Any}(),
         _get_eos(eos)...
     )

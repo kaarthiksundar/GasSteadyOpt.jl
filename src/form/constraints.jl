@@ -88,7 +88,7 @@ function _add_compressor_physics_constraints!(sopt::SteadyOptimizer, opt_model::
                 @constraints(m, begin 
                     compressor[i]["min_c_ratio"]^2 * pi_i <= pi_j, 
                     pi_j <= compressor[i]["max_c_ratio"]^2 * pi_i,
-                    
+                    end    
                 )
 
             end 
