@@ -18,7 +18,7 @@ function _parse_data(data_folder::AbstractString,
         end 
         nominations_data = nominations[nomination_case]
         slack_nodes_data = Dict{String,Any}("slack_node" => slack_nodes[nomination_case])
-        decision_group_data = (!isnothing(fids.decision_group)) ? _parse_json_file_from_zip(zip_reader, fids.decision_groups) : Dict{String,Any}()
+        decision_group_data = (!isnothing(fids.decision_group)) ? _parse_json_file_from_zip(zip_reader, fids.decision_group) : Dict{String,Any}()
         slack_pressure_data = Dict{String,Any}("slack_pressure" => slack_pressure)
         if (isempty(decision_group_data))
             return merge(network_data, params_data, nominations_data, slack_nodes_data, slack_pressure_data)
