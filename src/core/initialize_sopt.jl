@@ -26,8 +26,8 @@ function initialize_optimizer(data::Dict{String,Any};
         _add_resistor_info_at_nodes!,
         _add_loss_resistor_info_at_nodes!,
         _add_short_pipe_info_at_nodes!,
-        _add_receipts_at_nodes!,
-        _add_deliveries_at_nodes!,
+        _add_entries_at_nodes!,
+        _add_exits_at_nodes!,
         _add_decision_groups!
         # _add_nodes_incident_on_compressors!
         ]

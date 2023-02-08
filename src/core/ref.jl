@@ -119,30 +119,30 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["pressure_loss"] = loss_resistor["pressure_loss"]
     end 
 
-    for (i, receipt) in get(data, "receipts", [])
-        name = :receipt 
+    for (i, entry) in get(data, "entries", [])
+        name = :entry
         (!haskey(ref, name)) && (ref[name] = Dict())
         id = parse(Int64, i)
         ref[name][id] = Dict()
-        @assert id == receipt["id"]
+        @assert id == entry["id"]
         ref[name][id]["id"] = id
-        ref[name][id]["node_id"] = receipt["node_id"]
-        ref[name][id]["min_injection"] = data["receipt_nominations"][i]["min_injection"]
-        ref[name][id]["max_injection"] = data["receipt_nominations"][i]["max_injection"]
-        ref[name][id]["cost"] = data["receipt_nominations"][i]["cost"]
+        ref[name][id]["node_id"] = entry["node_id"]
+        ref[name][id]["min_injection"] = data["entry_nominations"][i]["min_injection"]
+        ref[name][id]["max_injection"] = data["entry_nominations"][i]["max_injection"]
+        ref[name][id]["cost"] = data["entry_nominations"][i]["cost"]
     end 
 
-    for (i, delivery) in get(data, "deliveries", [])
-        name = :delivery 
+    for (i, exit) in get(data, "exits", [])
+        name = :exit
         (!haskey(ref, name)) && (ref[name] = Dict())
         id = parse(Int64, i)
         ref[name][id] = Dict()
-        @assert id == delivery["id"]
+        @assert id == exit["id"]
         ref[name][id]["id"] = id
-        ref[name][id]["node_id"] = delivery["node_id"] 
-        ref[name][id]["min_withdrawal"] = data["delivery_nominations"][i]["min_withdrawal"]
-        ref[name][id]["max_withdrawal"] = data["delivery_nominations"][i]["max_withdrawal"]
-        ref[name][id]["cost"] = data["delivery_nominations"][i]["cost"]
+        ref[name][id]["node_id"] = exit["node_id"] 
+        ref[name][id]["min_withdrawal"] = data["exit_nominations"][i]["min_withdrawal"]
+        ref[name][id]["max_withdrawal"] = data["exit_nominations"][i]["max_withdrawal"]
+        ref[name][id]["cost"] = data["exit_nominations"][i]["cost"]
     end 
     return
 end
@@ -296,24 +296,24 @@ function _add_short_pipe_info_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String
 end
 
 
-function _add_receipts_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
-    ref[:receipts_at_node] = Dict{Int64, Vector{Int64}}(
+function _add_entries_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:entries_at_node] = Dict{Int64, Vector{Int64}}(
         i => [] for i in keys(ref[:node])
     )
 
-    for (id, receipt) in get(ref, :receipt, [])
-        push!(ref[:receipts_at_node][receipt["id"]], id)
+    for (id, entry) in get(ref, :entry, [])
+        push!(ref[:entries_at_node][entry["id"]], id)
     end 
     return
 end 
 
-function _add_deliveries_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
-    ref[:deliveries_at_node] = Dict{Int64, Vector{Int64}}(
+function _add_exits_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:exits_at_node] = Dict{Int64, Vector{Int64}}(
         i => [] for i in keys(ref[:node])
     )
 
-    for (id, delivery) in get(ref, :delivery, [])
-        push!(ref[:deliveries_at_node][delivery["id"]], id)
+    for (id, exit) in get(ref, :exit, [])
+        push!(ref[:exits_at_node][exit["id"]], id)
     end 
     return
 end 

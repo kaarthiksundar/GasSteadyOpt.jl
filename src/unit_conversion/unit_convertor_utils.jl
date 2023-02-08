@@ -99,13 +99,13 @@ function _get_data_units(rescale_functions)::Dict{Symbol,Any}
         "pressure_loss" => rescale_pressure
     )
 
-    receipt_nomination_units = Dict{String,Function}(
+    entry_nomination_units = Dict{String,Function}(
         "min_injection" => rescale_mass_flow,
         "max_injection" => rescale_mass_flow,
         "cost" => rescale_cost
     )
 
-    delivery_nomination_units = Dict{String,Function}(
+    exit_nomination_units = Dict{String,Function}(
         "min_withdrawal" => rescale_mass_flow,
         "max_withdrawal" => rescale_mass_flow,
         "cost" => rescale_cost
@@ -123,8 +123,8 @@ function _get_data_units(rescale_functions)::Dict{Symbol,Any}
     units[:resistor_units] = resistor_units
     units[:loss_resistor_units] = loss_resistor_units
     units[:short_pipe_units] = short_pipe_units
-    units[:receipt_nomination_units] = receipt_nomination_units
-    units[:delivery_nomination_units] = delivery_nomination_units
+    units[:entry_nomination_units] = entry_nomination_units
+    units[:exit_nomination_units] = exit_nomination_units
     units[:slack_pressure_units] = slack_pressure_units
 
     return units
@@ -142,8 +142,8 @@ function _rescale_data!(data::Dict{String,Any},
     resistor_units = units[:resistor_units]
     loss_resistor_units = units[:loss_resistor_units]
     short_pipe_units = units[:short_pipe_units]
-    receipt_nomination_units = units[:receipt_nomination_units] 
-    delivery_nomination_units = units[:delivery_nomination_units]
+    entry_nomination_units = units[:entry_nomination_units] 
+    exit_nomination_units = units[:exit_nomination_units]
     slack_pressure_units = units[:slack_pressure_units]
 
     rescale_mass_flow = rescale_functions[1]
@@ -220,17 +220,17 @@ function _rescale_data!(data::Dict{String,Any},
         end 
     end 
     
-    for (_, receipt) in get(data, "receipt_nominations", [])
-        for (param, f) in receipt_nomination_units
-            value = receipt[param]
-            receipt[param] = f(value)
+    for (_, entry) in get(data, "entry_nominations", [])
+        for (param, f) in entry_nomination_units
+            value = entry[param]
+            entry[param] = f(value)
         end 
     end 
     
-    for (_, delivery) in get(data, "delivery_nominations", [])
-        for (param, f) in delivery_nomination_units
-            value = delivery[param]
-            delivery[param] = f(value)
+    for (_, exit) in get(data, "exit_nominations", [])
+        for (param, f) in exit_nomination_units
+            value = exit[param]
+            exit[param] = f(value)
         end 
     end 
 
