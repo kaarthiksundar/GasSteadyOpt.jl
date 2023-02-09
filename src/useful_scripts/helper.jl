@@ -11,3 +11,9 @@ function get_data(data_folder::AbstractString,
     )
     return initialize_optimizer(data; kwargs...)
 end
+
+function write_csv(file, header, rows)
+    open(file, "w") do io
+        writedlm(io, [permutedims(header); reduce(hcat, rows)'], ',')
+    end
+end

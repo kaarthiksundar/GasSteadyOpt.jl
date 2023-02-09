@@ -75,7 +75,7 @@ function compare_resistor_models(data::Dict; num_samples = 10)
         drag = resistor["drag"]
         diameter = resistor["diameter"]
         area = pi * 0.25 * diameter^2
-        max_flow = resistor["max_flow"]
+        max_flow = 100.0
         fr_node = resistor["fr_node"]
         p_fr = (data["nodes"][string(fr_node)]["min_pressure"], data["nodes"][string(fr_node)]["max_pressure"])
         for _ in 1:num_samples
@@ -104,5 +104,14 @@ function compare_resistor_models(data::Dict; num_samples = 10)
             push!(full_cnga_error, abs(p_out_full_cnga - p_out_true_full_cnga) / p_out_true_full_cnga)
         end 
     end 
-    return ideal_error, simple_cnga_error, full_cnga_error
+
+    relative_errors = [] 
+    for i in eachindex(ideal_error) 
+        row = Vector{Float64}()
+        append!(row, [ideal_error[i], simple_cnga_error[i], full_cnga_error[i]])
+        push!(relative_errors, row)
+    end 
+
+    return relative_errors    
 end 
+
