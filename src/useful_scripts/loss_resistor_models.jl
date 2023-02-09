@@ -1,4 +1,4 @@
-function compare_resistor_models(data::Dict; num_samples = 10)
+function compare_loss_resistor_models(data::Dict; num_samples = 10)
     params, nominal_values = process_data!(data)
 
     TOL = 1e-6

@@ -26,6 +26,10 @@ include("core/sol.jl")
 
 include("core/initialize_sopt.jl")
 
+include("useful_scripts/helper.jl")
+include("useful_scripts/resistor_models.jl")
+include("useful_scripts/loss_resistor_models.jl")
+
 
 
 # end # module
