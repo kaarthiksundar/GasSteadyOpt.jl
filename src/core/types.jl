@@ -36,3 +36,9 @@ get_pressure(sopt::SteadyOptimizer, density) =
     sopt.pu_density_to_pu_pressure(density, nominal_values(sopt), params(sopt))
 get_density(sopt::SteadyOptimizer, pressure) = 
     sopt.pu_pressure_to_pu_density(pressure, nominal_values(sopt), params(sopt))
+
+function get_potential(sopt::SteadyOptimizer, pressure)
+    b1, b2 = get_eos_coeffs(sopt)
+    return (b1/2) * pressure^2 + (b2/3) * pressure^3
+end 
+    

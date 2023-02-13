@@ -318,7 +318,34 @@ function _add_exits_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
     return
 end 
 
-# function _add_nodes_incident_on_compressors!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+function _add_compressor_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:compressor_nodes] = [] 
+
+    for (_, compressor) in get(ref, :compressor, [])
+        push!(ref[:compressor_nodes], compressor["fr_node"])
+        push!(ref[:compressor_nodes], compressor["to_node"])
+    end 
+end 
+
+function _add_control_valve_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:control_valve_nodes] = [] 
+
+    for (_, control_valve) in get(ref, :control_valve, [])
+        push!(ref[:control_valve_nodes], control_valve["fr_node"])
+        push!(ref[:control_valve_nodes], control_valve["to_node"])
+    end 
+end 
+
+function _add_loss_resistor_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:loss_resistor_nodes] = [] 
+
+    for (_, loss_resistor) in get(ref, :loss_resistor, [])
+        push!(ref[:loss_resistor_nodes], loss_resistor["fr_node"])
+        push!(ref[:loss_resistor_nodes], loss_resistor["to_node"])
+    end 
+end 
+
+# function _add_pressure_node_labels!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
 #     ref[:is_pressure_node] = Dict{Int64,Bool}(
 #         i => false for i in keys(ref[:node])
 #     )
@@ -326,6 +353,16 @@ end
 #     for (_, compressor) in get(ref, :compressor, [])
 #         ref[:is_pressure_node][compressor["to_node"]] = true 
 #         ref[:is_pressure_node][compressor["fr_node"]] = true 
+#     end
+
+#     for (_, control_valve) in get(ref, :control_valve, [])
+#         ref[:is_pressure_node][control_valve["to_node"]] = true 
+#         ref[:is_pressure_node][control_valve["fr_node"]] = true 
+#     end
+
+#     for (_, loss_resistor) in get(ref, :loss_resistor, [])
+#         ref[:is_pressure_node][loss_resistor["to_node"]] = true 
+#         ref[:is_pressure_node][loss_resistor["fr_node"]] = true 
 #     end
 # end 
 
