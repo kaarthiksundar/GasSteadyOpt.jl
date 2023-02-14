@@ -41,4 +41,16 @@ function get_potential(sopt::SteadyOptimizer, pressure)
     b1, b2 = get_eos_coeffs(sopt)
     return (b1/2) * pressure^2 + (b2/3) * pressure^3
 end 
+
+function is_pressure_node(sopt::SteadyOptimizer, node_id, is_ideal)
+    ids = union(
+            Set(ref(sopt, :control_valve_nodes)), 
+            Set(ref(sopt, :loss_resistor_nodes))
+        ) 
+    if (is_ideal)
+        return node_id in ids
+    else 
+        return node_id in union(ids, Set(ref(sopt, :compressor_nodes)))
+    end 
+end 
     
