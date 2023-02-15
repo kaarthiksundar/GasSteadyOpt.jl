@@ -153,6 +153,81 @@ function _add_compressor_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     end 
 end 
 
+""" add valve constraints """ 
+function _add_valve_constraints!(sopt::SteadyOptimizer, opt_model::OptModel)
+    m = opt_model.model 
+    var = opt_model.variables 
+    ids = keys(ref(sopt, :valve))
+    valve = ref(sopt, :valve)
+    for i in ids
+        i_node = valve[i]["fr_node"]
+        j_node = valve[i]["to_node"]
+        p_i = var[:pressure][i_node]
+        p_i_min = ref(sopt, :node, i_node, "min_pressure")
+        p_i_max = ref(sopt, :node, i_node, "max_pressure")
+        p_j = var[:pressure][j_node]
+        p_j_min = ref(sopt, :node, j_node, "min_pressure")
+        p_j_max = ref(sopt, :node, j_node, "max_pressure")
+        delta_p = valve[i]["max_pressure_differential"]
+        flow = var[:valve_flow][i]
+        flow_min = valve[i]["min_flow"]
+        flow_max = valve[i]["max_flow"]
+        x = var[:valve_status][i]            
+        @constraints(m, begin 
+            flow >= flow_min * x 
+            flow <= flow_max * x 
+            p_i - p_j >= -delta_p 
+            p_i - p_j <= delta_p 
+            p_i - p_j >= (1 - x) * (p_i_min - p_j_max)
+            p_i - p_j <= (1 - x) * (p_i_max - p_j_min)
+        end)
+    end 
+end 
+
+""" add control valve constraints """ 
+function _add_control_valve_constraints!(sopt::SteadyOptimizer, opt_model::OptModel)
+    m = opt_model.model 
+    var = opt_model.variables 
+    ids = keys(ref(sopt, :control_valve))
+    cv = ref(sopt, :control_valve)
+    for i in ids
+        flow = var[:control_valve_flow][i]
+        i_node = cv[i]["fr_node"]
+        j_node = cv[i]["to_node"] 
+        p_i = var[:pressure][i_node]
+        p_i_min = ref(sopt, :node, i_node, "min_pressure")
+        p_i_max = ref(sopt, :node, i_node, "max_pressure")
+        p_j = var[:pressure][j_node]
+        p_j_min = ref(sopt, :node, j_node, "min_pressure")
+        p_j_max = ref(sopt, :node, j_node, "max_pressure")
+        delta_p_min = cv[i]["min_pressure_differential"]
+        delta_p_max = cv[i]["max_pressure_differential"]
+        x = var[:control_valve_status][i]
+        flow_max = cv[i]["max_flow"]
+        internal_bypass_required = cv[i]["internal_bypass_required"] == true
+        if !internal_bypass_required
+            set_lower_bound(flow, 0.0)
+            @constraints(m, begin 
+                flow <= x * flow_max
+                p_i - p_j >= (p_i_min - p_j_max) + x * (delta_p_min - p_i_min + p_j_max)
+                p_i - p_j <= (p_i_max - p_j_min) - x * (p_i_max - p_j_min - delta_p_max)
+            end)
+        else 
+            x_ac = var[:control_valve_active][i]
+            x_bp = var[:control_valve_bypass][i]
+            @constraints(m, begin 
+                x == x_ac + x_bp 
+                flow >= -1.0 * x_bp * flow_max
+                flow <= x * flow_max
+                p_i - p_j >= (p_i_min - p_j_max) + x_ac * (delta_p_min - p_i_min + p_j_max)
+                p_i - p_j <= (p_i_max - p_j_min) - x_ac * (p_i_max - p_j_min - delta_p_max)
+                p_i - p_j >= (1 - x_bp) * (p_i_min - p_j_max)
+                p_i - p_j <= (1 - x_bp) * (p_i_max - p_j_min)
+            end)
+        end 
+    end 
+end 
+
 
 """ add all constraints to the model """
 function _add_constraints!(
@@ -163,4 +238,6 @@ function _add_constraints!(
     _add_slack_node_constraints!(sopt, opt_model)
     _add_pipe_constraints!(sopt, opt_model)
     _add_compressor_constraints!(sopt, opt_model)
+    _add_valve_constraints!(sopt, opt_model)
+    _add_control_valve_constraints!(sopt, opt_model)
 end 

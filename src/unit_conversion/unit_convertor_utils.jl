@@ -73,7 +73,9 @@ function _get_data_units(rescale_functions)::Dict{Symbol,Any}
         "min_flow" => rescale_mass_flow, 
         "max_flow" => rescale_mass_flow,
         "min_pressure_differential" => rescale_pressure,
-        "max_pressure_differential" => rescale_pressure
+        "max_pressure_differential" => rescale_pressure, 
+        "min_inlet_pressure" => rescale_pressure, 
+        "max_outlet_pressure" => rescale_pressure
     )
 
     short_pipe_units = Dict{String,Any}(

@@ -31,7 +31,8 @@ function initialize_optimizer(data::Dict{String,Any};
         _add_decision_groups!,
         _add_compressor_nodes!, 
         _add_control_valve_nodes!, 
-        _add_loss_resistor_nodes!
+        _add_loss_resistor_nodes!, 
+        _add_valve_nodes!
         ]
     )
 

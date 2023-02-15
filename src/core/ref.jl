@@ -61,6 +61,8 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["internal_bypass_required"] = get(control_valve, "internal_bypass_required", 0)
         ref[name][id]["max_pressure_differential"] = control_valve["max_pressure_differential"]
         ref[name][id]["min_pressure_differential"] = control_valve["min_pressure_differential"]
+        ref[name][id]["min_inlet_pressure"] = control_valve["min_inlet_pressure"]
+        ref[name][id]["max_outlet_pressure"] = control_valve["max_outlet_pressure"]
     end 
 
     for (i, valve) in get(data, "valves", [])
@@ -333,6 +335,15 @@ function _add_control_valve_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any}
     for (_, control_valve) in get(ref, :control_valve, [])
         push!(ref[:control_valve_nodes], control_valve["fr_node"])
         push!(ref[:control_valve_nodes], control_valve["to_node"])
+    end 
+end 
+
+function _add_valve_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:valve_nodes] = [] 
+
+    for (_, valve) in get(ref, :valve, [])
+        push!(ref[:valve_nodes], valve["fr_node"])
+        push!(ref[:valve_nodes], valve["to_node"])
     end 
 end 
 

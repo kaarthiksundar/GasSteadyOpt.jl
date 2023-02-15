@@ -19,7 +19,8 @@ function _add_nodal_pressure_variables!(sopt::SteadyOptimizer, opt_model::OptMod
     if (is_ideal)
         ids = union(
             Set(ref(sopt, :control_valve_nodes)), 
-            Set(ref(sopt, :loss_resistor_nodes))
+            Set(ref(sopt, :loss_resistor_nodes)), 
+            Set(ref(sopt, :valve_nodes))
         ) |> collect
         var[:pressure] = @variable(m, [i in ids], 
             lower_bound = ref(sopt, :node, i, "min_pressure"), 
@@ -30,7 +31,8 @@ function _add_nodal_pressure_variables!(sopt::SteadyOptimizer, opt_model::OptMod
         ids = union(
             Set(ref(sopt, :control_valve_nodes)), 
             Set(ref(sopt, :loss_resistor_nodes)),
-            Set(ref(sopt, :compressor_nodes))
+            Set(ref(sopt, :compressor_nodes)), 
+            Set(ref(sopt, :valve_nodes))
         ) |> collect 
         var[:pressure] = @variable(m, [i in ids], 
             lower_bound = ref(sopt, :node, i, "min_pressure"), 
@@ -83,6 +85,40 @@ function _add_compressor_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
     )
 end 
 
+""" flow variables for each valve in the network """ 
+function _add_valve_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
+    m = opt_model.model 
+    var = opt_model.variables
+    ids = keys(ref(sopt, :valve))
+    var[:valve_flow] = @variable(m, [i in ids],
+        base_name = "fv"
+    )
+    var[:valve_status] = @variable(m, [i in ids],
+        binary = true, base_name = "xv"
+    )
+end 
+
+""" flow variables for each control valve in the network """ 
+function _add_control_valve_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
+    m = opt_model.model 
+    var = opt_model.variables
+    ids = keys(ref(sopt, :control_valve))
+    var[:control_valve_flow] = @variable(m, [i in ids],
+        base_name = "fcv"
+    )
+    var[:control_valve_status] = @variable(m, [i in ids],
+        binary = true, base_name = "xcv"
+    )
+    var[:control_valve_active] = @variable(m, 
+        [i in ids; ref(sopt, :control_valve, i, "internal_bypass_required") == true], 
+        binary = true, base_name = "xcv_ac"
+    )
+    var[:control_valve_bypass] = @variable(m, 
+        [i in ids; ref(sopt, :control_valve, i, "internal_bypass_required") == true], 
+        binary = true, base_name = "xcv_bp"
+    )
+end 
+
 
 """ injection variables for each receipt in the network """ 
 function _add_receipt_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
@@ -117,4 +153,6 @@ function _add_variables!(sopt::SteadyOptimizer,
     _add_nodal_pressure_variables!(sopt, opt_model)
     _add_pipe_flow_variables!(sopt, opt_model, nlp=nlp)
     _add_compressor_variables!(sopt, opt_model)
+    _add_valve_variables!(sopt, opt_model)
+    _add_control_valve_variables!(sopt, opt_model)
 end 
