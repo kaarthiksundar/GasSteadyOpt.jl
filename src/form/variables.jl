@@ -119,6 +119,14 @@ function _add_control_valve_variables!(sopt::SteadyOptimizer, opt_model::OptMode
     )
 end 
 
+""" flow variables for each short pipe in the network """ 
+function _add_control_valve_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
+    m = opt_model.model 
+    var = opt_model.variables
+    ids = keys(ref(sopt, :short_pipe))
+    var[:short_pipe_flow] = @variable(m, [i in ids], base_name = "fsp")
+end 
+
 
 """ injection variables for each receipt in the network """ 
 function _add_receipt_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
@@ -155,4 +163,5 @@ function _add_variables!(sopt::SteadyOptimizer,
     _add_compressor_variables!(sopt, opt_model)
     _add_valve_variables!(sopt, opt_model)
     _add_control_valve_variables!(sopt, opt_model)
+    _add_short_pipe_variables!(sopt, opt_model)
 end 
