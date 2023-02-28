@@ -233,18 +233,18 @@ function _add_short_pipe_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :short_pipe))
-    short_pipe = ref(sopt, :short_pipe)
+    sp = ref(sopt, :short_pipe)
     _, b2 = get_eos_coeffs(sopt)
     is_ideal = isapprox(b2, 0.0)
     
     @constraint(m, [i in ids], 
-        var[:potential][short_pipe[i]["fr_node"]] == 
-        var[:potential][short_pipe[i]["to_node"]]
+        var[:potential][sp[i]["fr_node"]] == 
+        var[:potential][sp[i]["to_node"]]
     )
     
     for i in ids 
-        fr_node = short_pipe[i]["fr_node"]
-        to_node = short_pipe[i]["to_node"]
+        fr_node = sp[i]["fr_node"]
+        to_node = sp[i]["to_node"]
         fr_pressure_node = is_pressure_node(sopt, fr_node, is_ideal)
         to_pressure_node = is_pressure_node(sopt, to_node, is_ideal)
 
@@ -253,6 +253,30 @@ function _add_short_pipe_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
         end 
     end 
 end     
+
+""" add loss resistor constraints """
+function _add_loss_resistor_constraints!(sopt::SteadyOptimizer, opt_model::OptModel)
+    m = opt_model.model 
+    var = opt_model.variables 
+    ids = keys(ref(sopt, :loss_resistor))
+    lr = ref(sopt, :loss_resistor)
+    for i in ids 
+        flow = var[:loss_resistor_flow][i]
+        x = var[:loss_resistor_flow_direction][i]
+        delta_p = lr[i]["pressure_loss"]
+        i_node = lr[i]["fr_node"]
+        j_node = lr[i]["to_node"] 
+        p_i = var[:pressure][i_node]
+        p_j = var[:pressure][j_node]
+        flow_min = lr[i]["min_flow"]
+        flow_max = lr[i]["max_flow"]
+        @constraints(m, begin
+            p_i - p_j == (2 * x - 1) * delta_p
+            flow <= x * flow_max 
+            flow >= (1 - x) * flow_min
+        end)
+    end 
+end 
 
 
 """ add all constraints to the model """
@@ -267,4 +291,5 @@ function _add_constraints!(
     _add_valve_constraints!(sopt, opt_model)
     _add_control_valve_constraints!(sopt, opt_model)
     _add_short_pipe_constraints!(sopt, opt_model)
+    _add_loss_resistor_constraints!(sopt, opt_model)
 end 
