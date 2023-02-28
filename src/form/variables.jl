@@ -120,7 +120,7 @@ function _add_control_valve_variables!(sopt::SteadyOptimizer, opt_model::OptMode
 end 
 
 """ flow variables for each short pipe in the network """ 
-function _add_control_valve_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
+function _add_short_pipe_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :short_pipe))

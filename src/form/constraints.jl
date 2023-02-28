@@ -53,7 +53,7 @@ function _add_pipe_constraints!(
     end 
     (nlp) && (return)
     @constraint(m, [i in ids], 
-        var[:potential][pipe[i]]["fr_node"] - var[:potential][pipe[i]["to_node"]] == 
+        var[:potential][pipe[i]["fr_node"]] - var[:potential][pipe[i]["to_node"]] == 
         resistance[i] * var[:pipe_flow_lifted][i]
     )
     f = x -> x * abs(x)
@@ -66,7 +66,7 @@ function _add_pipe_constraints!(
                 [pipe[i]["min_flow"], 0.0, pipe[i]["max_flow"]] 
             end 
         PolyhedralRelaxations.construct_univariate_relaxation!(m, f, 
-            var[:pipe_flow][i], var[:pipe_flow_lifted][i], partition, milp; f_dash = fdash)
+            var[:pipe_flow][i], var[:pipe_flow_lifted][i], partition, false; f_dash = fdash)
     end  
 end 
 
@@ -228,6 +228,32 @@ function _add_control_valve_constraints!(sopt::SteadyOptimizer, opt_model::OptMo
     end 
 end 
 
+""" add short pipe constraints """
+function _add_short_pipe_constraints!(sopt::SteadyOptimizer, opt_model::OptModel)
+    m = opt_model.model 
+    var = opt_model.variables
+    ids = keys(ref(sopt, :short_pipe))
+    short_pipe = ref(sopt, :short_pipe)
+    _, b2 = get_eos_coeffs(sopt)
+    is_ideal = isapprox(b2, 0.0)
+    
+    @constraint(m, [i in ids], 
+        var[:potential][short_pipe[i]["fr_node"]] == 
+        var[:potential][short_pipe[i]["to_node"]]
+    )
+    
+    for i in ids 
+        fr_node = short_pipe[i]["fr_node"]
+        to_node = short_pipe[i]["to_node"]
+        fr_pressure_node = is_pressure_node(sopt, fr_node, is_ideal)
+        to_pressure_node = is_pressure_node(sopt, to_node, is_ideal)
+
+        if fr_pressure_node && to_pressure_node 
+            @constraint(m, var[:pressure][fr_node] == var[:pressure][to_node])
+        end 
+    end 
+end     
+
 
 """ add all constraints to the model """
 function _add_constraints!(
@@ -236,8 +262,9 @@ function _add_constraints!(
     nlp::Bool=true
 )
     _add_slack_node_constraints!(sopt, opt_model)
-    _add_pipe_constraints!(sopt, opt_model)
+    _add_pipe_constraints!(sopt, opt_model, nlp=nlp)
     _add_compressor_constraints!(sopt, opt_model)
     _add_valve_constraints!(sopt, opt_model)
     _add_control_valve_constraints!(sopt, opt_model)
+    _add_short_pipe_constraints!(sopt, opt_model)
 end 
