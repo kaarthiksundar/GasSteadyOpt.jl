@@ -105,6 +105,7 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
         ref[name][id]["max_flow"] = get(resistor, "max_flow", NaN)
         ref[name][id]["drag"] = resistor["drag"]
         ref[name][id]["diameter"] = resistor["diameter"]
+        ref[name][id]["area"] = resistor["area"]
     end 
 
     for (i, loss_resistor) in get(data, "loss_resistors", [])
@@ -356,26 +357,26 @@ function _add_loss_resistor_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any}
     end 
 end 
 
-# function _add_pressure_node_labels!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
-#     ref[:is_pressure_node] = Dict{Int64,Bool}(
-#         i => false for i in keys(ref[:node])
-#     )
+function _add_pressure_node_labels!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
+    ref[:is_pressure_node] = Dict{Int64,Bool}(
+        i => false for i in keys(ref[:node])
+    )
 
-#     for (_, compressor) in get(ref, :compressor, [])
-#         ref[:is_pressure_node][compressor["to_node"]] = true 
-#         ref[:is_pressure_node][compressor["fr_node"]] = true 
-#     end
+    for (_, compressor) in get(ref, :compressor, [])
+        ref[:is_pressure_node][compressor["to_node"]] = true 
+        ref[:is_pressure_node][compressor["fr_node"]] = true 
+    end
 
-#     for (_, control_valve) in get(ref, :control_valve, [])
-#         ref[:is_pressure_node][control_valve["to_node"]] = true 
-#         ref[:is_pressure_node][control_valve["fr_node"]] = true 
-#     end
+    for (_, control_valve) in get(ref, :control_valve, [])
+        ref[:is_pressure_node][control_valve["to_node"]] = true 
+        ref[:is_pressure_node][control_valve["fr_node"]] = true 
+    end
 
-#     for (_, loss_resistor) in get(ref, :loss_resistor, [])
-#         ref[:is_pressure_node][loss_resistor["to_node"]] = true 
-#         ref[:is_pressure_node][loss_resistor["fr_node"]] = true 
-#     end
-# end 
+    for (_, loss_resistor) in get(ref, :loss_resistor, [])
+        ref[:is_pressure_node][loss_resistor["to_node"]] = true 
+        ref[:is_pressure_node][loss_resistor["fr_node"]] = true 
+    end
+end 
 
 
 

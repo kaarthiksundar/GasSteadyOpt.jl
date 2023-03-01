@@ -92,7 +92,8 @@ function _get_data_units(rescale_functions)::Dict{Symbol,Any}
     resistor_units = Dict{String,Any}(
         "min_flow" => rescale_mass_flow, 
         "max_flow" => rescale_mass_flow,
-        "diameter" => rescale_length
+        "diameter" => rescale_length,
+        "area" => rescale_area
     )
 
     loss_resistor_units = Dict{String,Any}(
