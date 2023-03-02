@@ -250,13 +250,13 @@ function _fix_data!(data::Dict{String,Any})
             for component in decision 
                 if component["component_type"] == "compressor"
                     id = component["id"]
-                    if haskey(component, "flow_direction") || haskey(component, "mode")
+                    if haskey(component, "mode")
                         data["compressors"][string(id)]["internal_bypass_required"] = 1
                     end 
                 end 
                 if component["component_type"] == "control_valve"
                     id = component["id"]
-                    if haskey(component, "flow_direction") || haskey(component, "mode")
+                    if haskey(component, "mode")
                         data["control_valves"][string(id)]["internal_bypass_required"] = 1
                     end 
                 end 

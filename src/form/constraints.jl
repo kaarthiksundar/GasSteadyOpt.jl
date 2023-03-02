@@ -98,8 +98,8 @@ function _add_compressor_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
             x = var[:compressor_status][i]
             internal_bypass_required = compressor[i]["internal_bypass_required"] == true
             if !internal_bypass_required
-                set_lower_bound(flow, 0.0)
                 @constraints(m, begin 
+                    flow >= x * compressor[i]["min_flow"]
                     flow <= x * compressor[i]["max_flow"]
                     pi_j >= alpha_min * pi_i - (1 - x) * (alpha_min * pi_i_max - pi_j_min)
                     pi_j <= alpha_max * pi_i + (1 - x) * (pi_j_max - alpha_max * pi_i_min)
@@ -109,7 +109,7 @@ function _add_compressor_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
                 x_bp = var[:compressor_bypass][i]
                 @constraints(m, begin 
                     x == x_ac + x_bp 
-                    flow >= -1.0 * x_bp * compressor[i]["max_flow"]
+                    flow >= x_bp * compressor[i]["min_flow"]
                     flow <= x * compressor[i]["max_flow"]
                     pi_j >= alpha_min * pi_i - (2 - x - x_ac) * (alpha_min * pi_i_max - pi_j_min)
                     pi_j <= alpha_max * pi_i + (2 - x - x_ac) * (pi_j_max - alpha_max * pi_i_min)
@@ -134,8 +134,8 @@ function _add_compressor_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
             x = var[:compressor_status][i]
             internal_bypass_required = compressor[i]["internal_bypass_required"] == true
             if !internal_bypass_required
-                set_lower_bound(flow, 0.0)
                 @constraints(m, begin 
+                    flow <= x * compressor[i]["min_flow"]
                     flow <= x * compressor[i]["max_flow"]
                     p_j >= alpha_min * p_i - (1 - x) * (alpha_min * p_i_max - p_j_min)
                     p_j <= alpha_max * p_i + (1 - x) * (p_j_max - alpha_max * p_i_min)
@@ -145,7 +145,7 @@ function _add_compressor_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
                 x_bp = var[:compressor_bypass][i]
                 @constraints(m, begin 
                     x == x_ac + x_bp 
-                    flow >= -1.0 * x_bp * compressor[i]["max_flow"]
+                    flow >= x_bp * compressor[i]["min_flow"]
                     flow <= x * compressor[i]["max_flow"]
                     p_j >= alpha_min * p_i - (2 - x - x_ac) * (alpha_min * p_i_max - p_j_min)
                     p_j <= alpha_max * p_i + (2 - x - x_ac) * (p_j_max - alpha_max * p_i_min)
@@ -210,10 +210,11 @@ function _add_control_valve_constraints!(sopt::SteadyOptimizer, opt_model::OptMo
         delta_p_max = cv[i]["max_pressure_differential"]
         x = var[:control_valve_status][i]
         flow_max = cv[i]["max_flow"]
+        flow_min = cv[i]["min_flow"]
         internal_bypass_required = cv[i]["internal_bypass_required"] == true
         if !internal_bypass_required
-            set_lower_bound(flow, 0.0)
             @constraints(m, begin 
+                flow >= x * flow_min
                 flow <= x * flow_max
                 p_i - p_j >= (p_i_min - p_j_max) + x * (delta_p_min - p_i_min + p_j_max)
                 p_i - p_j <= (p_i_max - p_j_min) - x * (p_i_max - p_j_min - delta_p_max)
@@ -223,7 +224,7 @@ function _add_control_valve_constraints!(sopt::SteadyOptimizer, opt_model::OptMo
             x_bp = var[:control_valve_bypass][i]
             @constraints(m, begin 
                 x == x_ac + x_bp 
-                flow >= -1.0 * x_bp * flow_max
+                flow >= x_bp * flow_min
                 flow <= x * flow_max
                 p_i - p_j >= (p_i_min - p_j_max) + x_ac * (delta_p_min - p_i_min + p_j_max)
                 p_i - p_j <= (p_i_max - p_j_min) - x_ac * (p_i_max - p_j_min - delta_p_max)
@@ -350,6 +351,9 @@ function _add_single_decision_constraints!(sopt::SteadyOptimizer, opt_model::Opt
                 if flow_direction != -1 
                     (flow_direction == 0) && (@constraint(m, var[:compressor_flow][component_id] >= 0))
                     (flow_direction == 1) && (@constraint(m, var[:compressor_flow][component_id] <= 0))
+                    if flow_direction == 1 && ref(sopt, :compressor, component_id, "min_flow") == 0.0
+                        @warn "flow in $component_info will be 0 in decision group $(first(entry))"
+                    end 
                 end 
                 if mode != "unknown"
                     (mode == "active") && (JuMP.fix(var[:compressor_active][component_id], 1))
@@ -360,6 +364,9 @@ function _add_single_decision_constraints!(sopt::SteadyOptimizer, opt_model::Opt
                 if flow_direction != -1 
                     (flow_direction == 0) && (@constraint(m, var[:control_valve_flow][component_id] >= 0))
                     (flow_direction == 1) && (@constraint(m, var[:control_valve_flow][component_id] <= 0))
+                    if flow_direction == 1 && ref(sopt, :control_valve, component_id, "min_flow") == 0.0
+                        @warn "flow in $component_info will be 0 in decision group $(first(entry))"
+                    end 
                 end 
                 if mode != "unknown"
                     (mode == "active") && (JuMP.fix(var[:control_valve_active][component_id], 1))
@@ -370,9 +377,19 @@ function _add_single_decision_constraints!(sopt::SteadyOptimizer, opt_model::Opt
     end 
 end 
 
+""" One decision for each decision group has to be chosen """ 
+function _add_decision_sum!(sopt::SteadyOptimizer, opt_model::OptModel)
+    m = opt_model.model 
+    var = opt_model.variables 
+    for (_, xs) in var[:decision_group_selector]
+        @constraint(m, sum(xs) == 1)
+    end 
+end 
+
 """ add decision group constraints """ 
 function _add_decision_group_constraints!(sopt::SteadyOptimizer, opt_model::OptModel)
     _add_single_decision_constraints!(sopt, opt_model)
+    _add_decision_sum!(sopt, opt_model)
 end 
 
 

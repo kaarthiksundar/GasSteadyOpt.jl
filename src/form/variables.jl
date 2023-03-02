@@ -73,6 +73,8 @@ function _add_compressor_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
     ids = keys(ref(sopt, :compressor))
     (isempty(ids)) && (return)
     var[:compressor_flow] = @variable(m, [i in ids],
+        lower_bound = ref(sopt, :compressor, i, "min_flow"),
+        upper_bound = ref(sopt, :compressor, i, "max_flow"), 
         base_name = "fc"
     )
     var[:compressor_status] = @variable(m, [i in ids],
@@ -95,6 +97,8 @@ function _add_valve_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
     ids = keys(ref(sopt, :valve))
     (isempty(ids)) && (return)
     var[:valve_flow] = @variable(m, [i in ids],
+        lower_bound = ref(sopt, :valve, i, "min_flow"),
+        upper_bound = ref(sopt, :valve, i, "max_flow"), 
         base_name = "fv"
     )
     var[:valve_status] = @variable(m, [i in ids],
@@ -109,6 +113,8 @@ function _add_control_valve_variables!(sopt::SteadyOptimizer, opt_model::OptMode
     ids = keys(ref(sopt, :control_valve))
     (isempty(ids)) && (return)
     var[:control_valve_flow] = @variable(m, [i in ids],
+        lower_bound = ref(sopt, :control_valve, i, "min_flow"),
+        upper_bound = ref(sopt, :control_valve, i, "max_flow"), 
         base_name = "fcv"
     )
     var[:control_valve_status] = @variable(m, [i in ids],
@@ -130,7 +136,11 @@ function _add_short_pipe_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
     var = opt_model.variables
     ids = keys(ref(sopt, :short_pipe))
     (isempty(ids)) && (return)
-    var[:short_pipe_flow] = @variable(m, [i in ids], base_name = "fsp")
+    var[:short_pipe_flow] = @variable(m, [i in ids], 
+        lower_bound = ref(sopt, :short_pipe, i, "min_flow"),
+        upper_bound = ref(sopt, :short_pipe, i, "max_flow"), 
+        base_name = "fsp"
+    )
 end 
 
 """ flow and direction variables for each loss resistor in the network """ 
@@ -139,7 +149,11 @@ function _add_loss_resistor_variables!(sopt::SteadyOptimizer, opt_model::OptMode
     var = opt_model.variables
     ids = keys(ref(sopt, :loss_resistor))
     (isempty(ids)) && (return)
-    var[:loss_resistor_flow] = @variable(m, [i in ids], base_name = "fls")
+    var[:loss_resistor_flow] = @variable(m, [i in ids], 
+        lower_bound = ref(sopt, :loss_resistor, i, "min_flow"),
+        upper_bound = ref(sopt, :loss_resistor, i, "max_flow"), 
+        base_name = "fls"
+    )
     var[:loss_resistor_flow_direction] = @variable(m, [i in ids], 
         binary = true, base_name = "xls"
     )
