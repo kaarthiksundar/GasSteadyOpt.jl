@@ -241,3 +241,26 @@ function process_data!(data::Dict{String,Any})
     
     return params, nominal_values
 end
+
+""" fixes internal_bypass_required flags for compressors and control valves using DGs"""
+function _fix_data!(data::Dict{String,Any})
+    for (_, dg) in data["decision_groups"]
+        decisions = dg["decisions"]
+        for (_, decision) in decisions 
+            for component in decision 
+                if component["component_type"] == "compressor"
+                    id = component["id"]
+                    if haskey(component, "flow_direction") || haskey(component, "mode")
+                        data["compressors"][string(id)]["internal_bypass_required"] = 1
+                    end 
+                end 
+                if component["component_type"] == "control_valve"
+                    id = component["id"]
+                    if haskey(component, "flow_direction") || haskey(component, "mode")
+                        data["control_valves"][string(id)]["internal_bypass_required"] = 1
+                    end 
+                end 
+            end 
+        end 
+    end 
+end 

@@ -3,6 +3,7 @@ function _add_slack_node_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     m = opt_model.model 
     var = opt_model.variables
     ids = ref(sopt, :slack_nodes)
+    (isempty(ids)) && (return)
     _, b2 = get_eos_coeffs(sopt)
     is_ideal = isapprox(b2, 0.0)
     
@@ -22,6 +23,7 @@ function _add_nodal_balance_constraints!(sopt::SteadyOptimizer, opt_model::OptMo
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :node))
+    (isempty(ids)) && (return)
    @constraint(m, [i in ids], 
         sum(var[:pipe_flow][j] for j in ref(sopt, :incoming_pipes, i)) + 
         sum(var[:compressor_flow][j] for j in ref(sopt, :incoming_compressors, i)) + 
@@ -41,6 +43,7 @@ function _add_pipe_constraints!(
     m = opt_model.model  
     var = opt_model.variables 
     ids = keys(ref(sopt, :pipe))
+    (isempty(ids)) && (return)
     pipe = ref(sopt, :pipe)
     c = nominal_values(sopt, :mach_num)^2 / nominal_values(sopt, :euler_num) 
     resistance = Dict(i => 
@@ -75,6 +78,7 @@ function _add_compressor_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     m = opt_model.model 
     var = opt_model.variables 
     ids = keys(ref(sopt, :compressor))
+    (isempty(ids)) && (return)
     compressor = ref(sopt, :compressor)
     _, b2 = get_eos_coeffs(sopt)
     is_ideal = isapprox(b2, 0.0)
@@ -158,6 +162,7 @@ function _add_valve_constraints!(sopt::SteadyOptimizer, opt_model::OptModel)
     m = opt_model.model 
     var = opt_model.variables 
     ids = keys(ref(sopt, :valve))
+    (isempty(ids)) && (return)
     valve = ref(sopt, :valve)
     for i in ids
         i_node = valve[i]["fr_node"]
@@ -189,6 +194,7 @@ function _add_control_valve_constraints!(sopt::SteadyOptimizer, opt_model::OptMo
     m = opt_model.model 
     var = opt_model.variables 
     ids = keys(ref(sopt, :control_valve))
+    (isempty(ids)) && (return)
     cv = ref(sopt, :control_valve)
     for i in ids
         flow = var[:control_valve_flow][i]
@@ -233,6 +239,7 @@ function _add_short_pipe_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :short_pipe))
+    (isempty(ids)) && (return)
     sp = ref(sopt, :short_pipe)
     _, b2 = get_eos_coeffs(sopt)
     is_ideal = isapprox(b2, 0.0)
@@ -259,6 +266,7 @@ function _add_loss_resistor_constraints!(sopt::SteadyOptimizer, opt_model::OptMo
     m = opt_model.model 
     var = opt_model.variables 
     ids = keys(ref(sopt, :loss_resistor))
+    (isempty(ids)) && (return)
     lr = ref(sopt, :loss_resistor)
     for i in ids 
         flow = var[:loss_resistor_flow][i]
@@ -287,6 +295,7 @@ function _add_resistor_constraints!(
     m = opt_model.model  
     var = opt_model.variables 
     ids = keys(ref(sopt, :resistor))
+    (isempty(ids)) && (return)
     resistor = ref(sopt, :resistor)
     c = nominal_values(sopt, :mach_num)^2 / nominal_values(sopt, :euler_num) 
     resistance = Dict(i => 
@@ -343,8 +352,6 @@ function _add_single_decision_constraints!(sopt::SteadyOptimizer, opt_model::Opt
                     (flow_direction == 1) && (@constraint(m, var[:compressor_flow][component_id] <= 0))
                 end 
                 if mode != "unknown"
-                    # TODO: write a data fixer to take care of this assertions at the data parsing level
-                    (ref(sopt, :compressor, component_id, "internal_bypass_required") != true) && (@show component_info, mode; continue)
                     (mode == "active") && (JuMP.fix(var[:compressor_active][component_id], 1))
                     (mode == "bypass") && (JuMP.fix(var[:compressor_bypass][component_id], 1))
                 end 
@@ -355,8 +362,6 @@ function _add_single_decision_constraints!(sopt::SteadyOptimizer, opt_model::Opt
                     (flow_direction == 1) && (@constraint(m, var[:control_valve_flow][component_id] <= 0))
                 end 
                 if mode != "unknown"
-                    # TODO: write a data fixer to take care of this assertions at the data parsing level
-                    (ref(sopt, :control_valve, component_id, "internal_bypass_required") != true) && (@show component_info, mode; continue)
                     (mode == "active") && (JuMP.fix(var[:control_valve_active][component_id], 1))
                     (mode == "bypass") && (JuMP.fix(var[:control_valve_bypass][component_id], 1))
                 end 

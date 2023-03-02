@@ -9,6 +9,7 @@ function initialize_optimizer(data_folder::AbstractString,
         case_name=case_name, 
         case_types=case_types
     )
+    _fix_data!(data)
     return initialize_optimizer(data; kwargs...)
 end
 

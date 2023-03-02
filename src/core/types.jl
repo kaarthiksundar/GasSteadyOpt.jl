@@ -20,7 +20,7 @@ struct SteadyOptimizer
 end
 
 ref(sopt::SteadyOptimizer) = sopt.ref
-ref(sopt::SteadyOptimizer, key::Symbol) = sopt.ref[key]
+ref(sopt::SteadyOptimizer, key::Symbol) = get(sopt.ref, key, Dict())
 ref(sopt::SteadyOptimizer, key::Symbol, id::Int64) = sopt.ref[key][id]
 ref(sopt::SteadyOptimizer, key::Symbol, id::Int64, field) = sopt.ref[key][id][field]
 

@@ -3,6 +3,7 @@ function _add_nodal_potential_variables!(sopt::SteadyOptimizer, opt_model::OptMo
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :node))
+    (isempty(ids)) && (return)
     var[:potential] = @variable(m, [i in ids], 
         lower_bound = get_potential(sopt, ref(sopt, :node, i, "min_pressure")), 
         upper_bound = get_potential(sopt, ref(sopt, :node, i, "min_pressure")), 
@@ -51,6 +52,7 @@ function _add_pipe_variables!(sopt::SteadyOptimizer,
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :pipe))
+    (isempty(ids)) && (return)
     var[:pipe_flow] = @variable(m, [i in ids],
         lower_bound = ref(sopt, :pipe, i, "min_flow"),
         upper_bound = ref(sopt, :pipe, i, "max_flow"), 
@@ -69,6 +71,7 @@ function _add_compressor_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :compressor))
+    (isempty(ids)) && (return)
     var[:compressor_flow] = @variable(m, [i in ids],
         base_name = "fc"
     )
@@ -90,6 +93,7 @@ function _add_valve_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :valve))
+    (isempty(ids)) && (return)
     var[:valve_flow] = @variable(m, [i in ids],
         base_name = "fv"
     )
@@ -103,6 +107,7 @@ function _add_control_valve_variables!(sopt::SteadyOptimizer, opt_model::OptMode
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :control_valve))
+    (isempty(ids)) && (return)
     var[:control_valve_flow] = @variable(m, [i in ids],
         base_name = "fcv"
     )
@@ -124,6 +129,7 @@ function _add_short_pipe_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :short_pipe))
+    (isempty(ids)) && (return)
     var[:short_pipe_flow] = @variable(m, [i in ids], base_name = "fsp")
 end 
 
@@ -132,6 +138,7 @@ function _add_loss_resistor_variables!(sopt::SteadyOptimizer, opt_model::OptMode
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :loss_resistor))
+    (isempty(ids)) && (return)
     var[:loss_resistor_flow] = @variable(m, [i in ids], base_name = "fls")
     var[:loss_resistor_flow_direction] = @variable(m, [i in ids], 
         binary = true, base_name = "xls"
@@ -146,6 +153,7 @@ function _add_resistor_variables!(sopt::SteadyOptimizer,
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :resistor))
+    (isempty(ids)) && (return)
     var[:resistor_flow] = @variable(m, [i in ids],
         lower_bound = ref(sopt, :resistor, i, "min_flow"),
         upper_bound = ref(sopt, :resistor, i, "max_flow"), 
@@ -164,6 +172,7 @@ function _add_decision_group_variables!(sopt::SteadyOptimizer, opt_model::OptMod
     m = opt_model.model 
     var = opt_model.variables 
     ids = keys(ref(sopt, :decision_group))
+    (isempty(ids)) && (return)
     dg = ref(sopt, :decision_group)
     var[:decision_group_selector] = Dict{Int,Any}()
     for id in ids 
@@ -180,6 +189,7 @@ function _add_receipt_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :receipt))
+    (isempty(ids)) && (return)
     var[:injection] = @variable(m, [i in ids], 
         lower_bound = ref(sopt, :receipt, i, "min_injection"), 
         upper_bound = ref(sopt, :receipt, i, "max_injection"), 
@@ -192,6 +202,7 @@ function _add_delivery_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
     m = opt_model.model 
     var = opt_model.variables
     ids = keys(ref(sopt, :delivery))
+    (isempty(ids)) && (return)
     var[:withdrawal] = @variable(m, [i in ids], 
         lower_bound = ref(sopt, :delivery, i, "min_withdrawal"),
         upper_bound = ref(sopt, :delivery, i, "max_withdrawal"),
