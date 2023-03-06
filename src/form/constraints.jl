@@ -425,7 +425,7 @@ function _add_decision_status!(sopt::SteadyOptimizer, opt_model::OptModel)
 end 
 
 """ enforce flow directions if they are specified for each decision """ 
-function _add_flow_direction!(sopt::SteadyOptimizer, opt_model::OptModel)
+function _add_decision_flow_direction!(sopt::SteadyOptimizer, opt_model::OptModel)
     m = opt_model.model
     var = opt_model.variables
     dg = ref(sopt, :decision_group)
@@ -433,21 +433,40 @@ function _add_flow_direction!(sopt::SteadyOptimizer, opt_model::OptModel)
         (group["num_decisions"] == 1) && (continue)
         num_decisions = group["num_decisions"]
         xdg = var[:decision_group_selector][id]
-        valve_expr = Dict( i => 0 for i in group["valves"] )
-        control_valve_expr = Dict( i => 0 for i in group["control_valves"] )
-        compressor_expr = Dict( i => 0 for i in group["compressors"] )
+        valve_expr = Dict( i => Dict("min" => AffExpr(0), "max" => AffExpr(0)) for i in group["valves"] )
+        control_valve_expr = Dict( i => Dict("min" => AffExpr(0), "max" => AffExpr(0)) for i in group["control_valves"] )
+        compressor_expr = Dict( i => Dict("min" => AffExpr(0), "max" => AffExpr(0)) for i in group["compressors"] )
         for i in 1:num_decisions 
             decision = group["decisions"][i]
             for (k, val) in decision 
                 component_type = k |> first 
                 component_id = k |> last
+                (component_type == :valve) && (expr_dict = valve_expr[component_id])
+                (component_type == :control_valve) && (expr_dict = control_valve_expr[component_id])
+                (component_type == :compressor) && (expr_dict = compressor_expr[component_id])
+                flow_min = ref(opt, component_type, component_id, "min_flow")
+                flow_max = ref(opt, component_type, component_id, "max_flow")
                 on_off = val["on_off"] 
-                if on_off == false
-                    flow_min = 0.0 
-                    flow_max = 0.0
+                (on_off == false) && (continue)
+                flow_direction = get(val, "flow_direction", -1)
+                if flow_direction == -1
+                   expr_dict["min"] += (flow_min * xdg[i])
+                   expr_dict["max"] += (flow_max * xdg[i])
+                elseif flow_direction == 0 
+                    expr_dict["max"] += (flow_max * xdg[i])
+                else 
+                    expr_dict["min"] += (flow_min * xdg[i])
                 end 
-            end 
+            end  
         end 
+        @constraint(m, [i in group["valves"]], var[:valve_flow][i] <= valve_expr[i]["max"])
+        @constraint(m, [i in group["valves"]], var[:valve_flow][i] >= valve_expr[i]["min"])
+
+        @constraint(m, [i in group["control_valves"]], var[:control_valve_flow][i] <= control_valve_expr[i]["max"])
+        @constraint(m, [i in group["control_valves"]], var[:control_valve_flow][i] >= control_valve_expr[i]["min"])
+
+        @constraint(m, [i in group["compressors"]], var[:compressor_flow][i] <= compressor_expr[i]["max"])
+        @constraint(m, [i in group["compressors"]], var[:compressor_flow][i] >= compressor_expr[i]["min"])
     end 
 end 
 
