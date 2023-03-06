@@ -386,10 +386,55 @@ function _add_decision_sum!(sopt::SteadyOptimizer, opt_model::OptModel)
     end 
 end 
 
+""" Turn components on or off based on each decision and set active/bypass status for compressors and control valves """ 
+function _add_decision_status!(sopt::SteadyOptimizer, opt_model::OptModel)
+    m = opt_model.model 
+    var = opt_model.variables
+    dg = ref(sopt, :decision_group)
+    for (id, group) in dg 
+        (group["num_decisions"] == 1) && (continue)
+        num_decisions = group["num_decisions"]
+        xdg = var[:decision_group_selector][id]
+        for i in 1:num_decisions 
+            decision = group["decisions"][i]
+            for (k, val) in decision
+                component_type = k |> first 
+                component_id = k |> last
+                on_off = val["on_off"]
+                if (on_off == true)
+                    (component_type == :valve) && (@constraint(m, xdg[i] <= var[:valve_status][component_id]))
+                    (component_type == :control_valve) && (@constraint(m, xdg[i] <= var[:control_valve_status][component_id]))
+                    (component_type == :compressor) && (@constraint(m, xdg[i] <= var[:compressor_status][component_id]))
+                    mode = get(val, "mode", "unknown")
+                    if mode == "active"
+                        (component_type == :control_valve) && (@constraint(m, xdg[i] <= var[:control_valve_active][component_id]))
+                        (component_type == :compressor) && (@constraint(m, xdg[i] <= var[:compressor_active][component_id]))
+                    end 
+                    if mode == "bypass"
+                        (component_type == :control_valve) && (@constraint(m, xdg[i] <= var[:control_valve_bypass][component_id]))
+                        (component_type == :compressor) && (@constraint(m, xdg[i] <= var[:compressor_bypass][component_id]))
+                    end 
+                else 
+                    (component_type == :valve) && (@constraint(m, xdg[i] <= 1 - var[:valve_status][component_id]))
+                    (component_type == :control_valve) && (@constraint(m, xdg[i] <= 1 - var[:control_valve_status][component_id]))
+                    (component_type == :compressor) && (@constraint(m, xdg[i] <= 1 - var[:compressor_status][component_id]))
+                end 
+            end 
+        end     
+    end 
+end 
+
+""" enforce flow directions if they are specified for each decision """ 
+function _add_flow_direction!(sopt::SteadyOptimizer, opt_model::OptModel)
+
+end 
+
 """ add decision group constraints """ 
 function _add_decision_group_constraints!(sopt::SteadyOptimizer, opt_model::OptModel)
     _add_single_decision_constraints!(sopt, opt_model)
     _add_decision_sum!(sopt, opt_model)
+    _add_decision_status!(sopt, opt_model)
+    _add_decision_flow_direction!(sopt, opt_model)
 end 
 
 
