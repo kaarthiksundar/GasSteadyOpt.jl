@@ -134,12 +134,12 @@ function process_data!(data::Dict{String,Any})
         "gas_specific_gravity",
         "specific_heat_capacity_ratio", 
         "nominal_length", 
-        "nominal_velocity", 
+        "nominal_velocity", # changed from NaN to 0.1, TODO: develop a systematic method
         "nominal_pressure",
         "nominal_density",
         "units"]
 
-    defaults_exhaustive = [288.706, 0.6, 1.4, 5000.0, NaN, NaN, NaN, 0]
+    defaults_exhaustive = [288.706, 0.6, 1.4, 5000.0, 0.1, NaN, NaN, 0]
 
     optimization_params = data["params"]
     
