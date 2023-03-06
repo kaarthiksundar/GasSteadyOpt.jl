@@ -401,7 +401,7 @@ function _add_decision_status!(sopt::SteadyOptimizer, opt_model::OptModel)
                 component_type = k |> first 
                 component_id = k |> last
                 on_off = val["on_off"]
-                if (on_off == true)
+                if on_off == true
                     (component_type == :valve) && (@constraint(m, xdg[i] <= var[:valve_status][component_id]))
                     (component_type == :control_valve) && (@constraint(m, xdg[i] <= var[:control_valve_status][component_id]))
                     (component_type == :compressor) && (@constraint(m, xdg[i] <= var[:compressor_status][component_id]))
@@ -426,7 +426,29 @@ end
 
 """ enforce flow directions if they are specified for each decision """ 
 function _add_flow_direction!(sopt::SteadyOptimizer, opt_model::OptModel)
-
+    m = opt_model.model
+    var = opt_model.variables
+    dg = ref(sopt, :decision_group)
+    for (id, group) in dg 
+        (group["num_decisions"] == 1) && (continue)
+        num_decisions = group["num_decisions"]
+        xdg = var[:decision_group_selector][id]
+        valve_expr = Dict( i => 0 for i in group["valves"] )
+        control_valve_expr = Dict( i => 0 for i in group["control_valves"] )
+        compressor_expr = Dict( i => 0 for i in group["compressors"] )
+        for i in 1:num_decisions 
+            decision = group["decisions"][i]
+            for (k, val) in decision 
+                component_type = k |> first 
+                component_id = k |> last
+                on_off = val["on_off"] 
+                if on_off == false
+                    flow_min = 0.0 
+                    flow_max = 0.0
+                end 
+            end 
+        end 
+    end 
 end 
 
 """ add decision group constraints """ 
