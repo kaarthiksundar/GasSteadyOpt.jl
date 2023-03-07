@@ -30,6 +30,7 @@ include("core/initialize_sopt.jl")
 
 include("useful_scripts/helper.jl")
 include("useful_scripts/resistor_models.jl")
+include("useful_scripts/apply_functions.jl")
 
 
 # end # module

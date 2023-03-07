@@ -199,35 +199,33 @@ function _add_decision_group_variables!(sopt::SteadyOptimizer, opt_model::OptMod
 end 
 
 """ injection variables for each receipt in the network """ 
-function _add_receipt_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
+function _add_injection_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
     m = opt_model.model 
     var = opt_model.variables
-    ids = keys(ref(sopt, :receipt))
+    ids = keys(ref(sopt, :entry))
+    entry = ref(sopt, :entry)
     (isempty(ids)) && (return)
+    for (id, val) in entry 
+        (val["max_injection"] < 0.0) && (@warn "max_injection at entry $id is negative")
+    end 
     var[:injection] = @variable(m, [i in ids], 
-        lower_bound = ref(sopt, :receipt, i, "min_injection"), 
-        upper_bound = ref(sopt, :receipt, i, "max_injection"), 
+        lower_bound = min(0.0, ref(sopt, :entry, i, "min_injection")), 
+        upper_bound = max(0.0, ref(sopt, :entry, i, "max_injection")), 
         base_name = "s"
     )
 end 
 
-""" withdrawal variables for each delivery in a network """ 
-function _add_delivery_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
-    m = opt_model.model 
-    var = opt_model.variables
-    ids = keys(ref(sopt, :delivery))
-    (isempty(ids)) && (return)
-    var[:withdrawal] = @variable(m, [i in ids], 
-        lower_bound = ref(sopt, :delivery, i, "min_withdrawal"),
-        upper_bound = ref(sopt, :delivery, i, "max_withdrawal"),
-        base_name = "d"
-    )
-end
+""" withdrawal variables for each receipt in the network """ 
+function _add_withdrawal_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
+    # TODO: create variables later if needed
+    return
+end 
 
 """ add all variables to the model """
 function _add_variables!(sopt::SteadyOptimizer, 
     opt_model::OptModel; 
-    nlp::Bool=true
+    nlp::Bool=true, 
+    fixed_withdrawal::Bool=true
 )
     _add_nodal_potential_variables!(sopt, opt_model)
     _add_nodal_pressure_variables!(sopt, opt_model)
@@ -239,4 +237,8 @@ function _add_variables!(sopt::SteadyOptimizer,
     _add_loss_resistor_variables!(sopt, opt_model)
     _add_resistor_variables!(sopt, opt_model, nlp=nlp)
     _add_decision_group_variables!(sopt, opt_model)
+    _add_injection_variables!(sopt, opt_model)
+    if fixed_withdrawal == false 
+        _add_withdrawal_variables(sopt, opt_model)
+    end 
 end 

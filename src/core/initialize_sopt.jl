@@ -1,8 +1,10 @@
 function initialize_optimizer(data_folder::AbstractString, 
     nomination_case::AbstractString;
     case_name::AbstractString="", 
-    case_types::Vector{Symbol}=Symbol[],
+    case_types::Vector{Symbol} = Symbol[],
     slack_pressure::Float64 = NaN,
+    apply::Vector{Function} = Function[change_nominal_velocity!, 
+        strengthen_flow_bounds!, modify_entry_nominations!],
     kwargs...)::SteadyOptimizer
     data = _parse_data(data_folder, nomination_case; 
         slack_pressure=slack_pressure,
@@ -10,6 +12,9 @@ function initialize_optimizer(data_folder::AbstractString,
         case_types=case_types
     )
     _fix_data!(data)
+    for f in apply 
+        f(data)
+    end 
     return initialize_optimizer(data; kwargs...)
 end
 

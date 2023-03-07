@@ -24,13 +24,24 @@ function _add_nodal_balance_constraints!(sopt::SteadyOptimizer, opt_model::OptMo
     var = opt_model.variables
     ids = keys(ref(sopt, :node))
     (isempty(ids)) && (return)
-   @constraint(m, [i in ids], 
-        sum(var[:pipe_flow][j] for j in ref(sopt, :incoming_pipes, i)) + 
-        sum(var[:compressor_flow][j] for j in ref(sopt, :incoming_compressors, i)) + 
-        sum(var[:injection][j] for j in ref(sopt, receipts_at_node, i)) ==
-        sum(var[:pipe_flow][j] for j in ref(sopt, :outgoing_pipes, i)) + 
-        sum(var[:compressor_flow][j] for j in ref(sopt, :outgoing_compressors, i)) +
-        sum(var[:withdrawal][j] for j in ref(sopt, deliveries_at_node, i)) 
+    @constraint(m, [i in ids], 
+        sum(var[:pipe_flow][j] for j in ref(sopt, :incoming_pipes, i); init=0.0) + 
+        sum(var[:short_pipe_flow][j] for j in ref(sopt, :incoming_short_pipes, i); init=0.0) + 
+        sum(var[:resistor_flow][j] for j in ref(sopt, :incoming_resistors, i); init=0.0) + 
+        sum(var[:loss_resistor_flow][j] for j in ref(sopt, :incoming_loss_resistors, i); init=0.0) + 
+        sum(var[:valve_flow][j] for j in ref(sopt, :incoming_valves, i); init=0.0) + 
+        sum(var[:control_valve_flow][j] for j in ref(sopt, :incoming_control_valves, i); init=0.0) +
+        sum(var[:compressor_flow][j] for j in ref(sopt, :incoming_compressors, i); init=0.0) + 
+        sum(var[:injection][j] for j in ref(sopt, :entries_at_node, i); init=0.0) 
+        ==
+        sum(var[:pipe_flow][j] for j in ref(sopt, :outgoing_pipes, i); init=0.0) + 
+        sum(var[:short_pipe_flow][j] for j in ref(sopt, :outgoing_short_pipes, i); init=0.0) + 
+        sum(var[:resistor_flow][j] for j in ref(sopt, :outgoing_resistors, i); init=0.0) + 
+        sum(var[:loss_resistor_flow][j] for j in ref(sopt, :outgoing_loss_resistors, i); init=0.0) + 
+        sum(var[:valve_flow][j] for j in ref(sopt, :outgoing_valves, i); init=0.0) + 
+        sum(var[:control_valve_flow][j] for j in ref(sopt, :outgoing_control_valves, i); init=0.0) +
+        sum(var[:compressor_flow][j] for j in ref(sopt, :outgoing_compressors, i); init=0.0) + 
+        sum([ref(sopt, :exit, j, "max_withdrawal") for j in ref(sopt, :exits_at_node, i)]; init=0.0)
     )
 end 
 
@@ -494,4 +505,5 @@ function _add_constraints!(
     _add_loss_resistor_constraints!(sopt, opt_model)
     _add_resistor_constraints!(sopt, opt_model, nlp=nlp)
     _add_decision_group_constraints!(sopt, opt_model)
+    _add_nodal_balance_constraints!(sopt, opt_model)
 end 
