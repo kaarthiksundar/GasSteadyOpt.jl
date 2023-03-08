@@ -6,7 +6,7 @@ function _add_nodal_potential_variables!(sopt::SteadyOptimizer, opt_model::OptMo
     (isempty(ids)) && (return)
     var[:potential] = @variable(m, [i in ids], 
         lower_bound = get_potential(sopt, ref(sopt, :node, i, "min_pressure")), 
-        upper_bound = get_potential(sopt, ref(sopt, :node, i, "min_pressure")), 
+        upper_bound = get_potential(sopt, ref(sopt, :node, i, "max_pressure")), 
         base_name = "pi"
     )
 end 

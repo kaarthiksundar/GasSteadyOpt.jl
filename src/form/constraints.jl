@@ -392,7 +392,7 @@ end
 function _add_decision_sum!(sopt::SteadyOptimizer, opt_model::OptModel)
     m = opt_model.model 
     var = opt_model.variables 
-    for (_, xs) in var[:decision_group_selector]
+    for (_, xs) in get(var, :decision_group_selector, [])
         @constraint(m, sum(xs) == 1)
     end 
 end 

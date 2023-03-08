@@ -305,7 +305,7 @@ function _add_entries_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
     )
 
     for (id, entry) in get(ref, :entry, [])
-        push!(ref[:entries_at_node][entry["id"]], id)
+        push!(ref[:entries_at_node][entry["node_id"]], id)
     end 
     return
 end 
@@ -316,7 +316,7 @@ function _add_exits_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{String,Any})
     )
 
     for (id, exit) in get(ref, :exit, [])
-        push!(ref[:exits_at_node][exit["id"]], id)
+        push!(ref[:exits_at_node][exit["node_id"]], id)
     end 
     return
 end 

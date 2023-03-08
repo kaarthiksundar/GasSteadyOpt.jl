@@ -244,7 +244,7 @@ end
 
 """ fixes internal_bypass_required flags for compressors and control valves using DGs"""
 function _fix_data!(data::Dict{String,Any})
-    for (_, dg) in data["decision_groups"]
+    for (_, dg) in get(data, "decision_groups", [])
         decisions = dg["decisions"]
         for (_, decision) in decisions 
             for component in decision 

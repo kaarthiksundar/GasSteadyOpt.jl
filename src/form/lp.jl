@@ -3,4 +3,5 @@ function create_lp!(sopt::SteadyOptimizer)
 
     _add_variables!(sopt, opt_model; nlp=false)
     _add_constraints!(sopt, opt_model; nlp=false)
+    _add_objective!(sopt, opt_model)
 end 

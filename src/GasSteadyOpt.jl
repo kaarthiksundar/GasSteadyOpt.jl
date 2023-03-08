@@ -23,6 +23,7 @@ include("core/sol.jl")
 
 include("form/variables.jl")
 include("form/constraints.jl")
+include("form/objective.jl")
 include("form/nlp.jl")
 include("form/lp.jl")
 

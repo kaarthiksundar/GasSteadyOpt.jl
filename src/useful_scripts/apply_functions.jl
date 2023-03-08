@@ -26,7 +26,7 @@ function modify_entry_nominations!(data::Dict)
     for (i, nomination) in get(data, "entry_nominations", [])
         if (nomination["max_injection"] > 0.0)
             data["entry_nominations"][i]["min_injection"] = 0.0 
-            data["entry_nominations"][i]["max_injection"] *= 0.05 
+            data["entry_nominations"][i]["max_injection"] += (data["entry_nominations"][i]["max_injection"] * 0.05)
         end 
     end 
     non_zero_injectors = filter(x -> last(x)["max_injection"] > 0.0, get(data, "entry_nominations", [])) 
