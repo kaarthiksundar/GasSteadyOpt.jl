@@ -1,3 +1,13 @@
+struct Optimization 
+    net::NetworkData 
+    # other things req of 
+end 
+
+struct simulator
+    net::NetworkData 
+    bc::Dict 
+end 
+
 struct OptModel 
     model::JuMP.AbstractModel
     variables::Dict{Symbol,Any}

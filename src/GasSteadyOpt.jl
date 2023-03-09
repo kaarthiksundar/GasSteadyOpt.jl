@@ -1,37 +1,31 @@
 # module GasSteadyOpt
 
-import JSON
-import ZipFile
-using JuMP
-using PolyhedralRelaxations
-using DelimitedFiles
+# using JuMP
+# using PolyhedralRelaxations
+# using DelimitedFiles
 
-include("io/json.jl")
-include("io/data_utils.jl")
+include("DataProcessing/DataProcessing.jl")
+using .DataProcessing: NetworkData, ref, params, nominal_values, get_eos_coeffs, get_pressure, get_density, get_potential, is_pressure_node
 
-include("unit_conversion/unit_convertor_utils.jl")
-include("unit_conversion/to_si.jl")
-include("unit_conversion/to_english.jl")
-include("unit_conversion/to_pu.jl")
-include("unit_conversion/unit_convertors.jl")
+include("Optimization/Optimization.jl")
+using .Optimization: OptModel, SteadyOptimizer, ObjectiveType
 
-include("core/eos.jl")
-include("core/types.jl")
-include("core/bounds.jl")
-include("core/ref.jl")
-include("core/sol.jl")
+# include("core/types.jl")
+# include("core/bounds.jl")
+# include("core/ref.jl")
+# include("core/sol.jl")
 
-include("form/variables.jl")
-include("form/constraints.jl")
-include("form/objective.jl")
-include("form/nlp.jl")
-include("form/lp.jl")
+# include("form/variables.jl")
+# include("form/constraints.jl")
+# include("form/objective.jl")
+# include("form/nlp.jl")
+# include("form/lp.jl")
 
-include("core/initialize_sopt.jl")
+# include("core/initialize_sopt.jl")
 
-include("useful_scripts/helper.jl")
-include("useful_scripts/resistor_models.jl")
-include("useful_scripts/apply_functions.jl")
+# include("useful_scripts/helper.jl")
+# include("useful_scripts/resistor_models.jl")
+# include("useful_scripts/apply_functions.jl")
 
 
 # end # module
