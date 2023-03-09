@@ -15,33 +15,15 @@ end
 function _add_nodal_pressure_variables!(sopt::SteadyOptimizer, opt_model::OptModel)
     m = opt_model.model 
     var = opt_model.variables
+    ids = keys(ref(sopt, :node))
+    (isempty(ids)) && (return)
     _, b2 = get_eos_coeffs(sopt)
     is_ideal = isapprox(b2, 0.0)
-    if (is_ideal)
-        ids = union(
-            Set(ref(sopt, :control_valve_nodes)), 
-            Set(ref(sopt, :loss_resistor_nodes)), 
-            Set(ref(sopt, :valve_nodes))
-        ) |> collect
-        var[:pressure] = @variable(m, [i in ids], 
-            lower_bound = ref(sopt, :node, i, "min_pressure"), 
-            upper_bound = ref(sopt, :node, i, "max_pressure"),
-            base_name = "p"
-        )
-    else 
-        ids = union(
-            Set(ref(sopt, :control_valve_nodes)), 
-            Set(ref(sopt, :loss_resistor_nodes)),
-            Set(ref(sopt, :compressor_nodes)), 
-            Set(ref(sopt, :valve_nodes))
-        ) |> collect 
-        var[:pressure] = @variable(m, [i in ids], 
-            lower_bound = ref(sopt, :node, i, "min_pressure"), 
-            upper_bound = ref(sopt, :node, i, "max_pressure"),
-            base_name = "p"
-        )
-    end 
-    
+    var[:pressure] = @variable(m, [i in ids; is_pressure_node(sopt, i, is_ideal) == true],
+        lower_bound = ref(sopt, :node, i, "min_pressure"), 
+        upper_bound = ref(sopt, :node, i, "max_pressure"),
+        base_name = "p"
+    )
 end 
 
 """ flow variables for each pipe in the network """ 

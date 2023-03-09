@@ -45,7 +45,8 @@ end
 function is_pressure_node(sopt::SteadyOptimizer, node_id, is_ideal)
     ids = union(
             Set(ref(sopt, :control_valve_nodes)), 
-            Set(ref(sopt, :loss_resistor_nodes))
+            Set(ref(sopt, :loss_resistor_nodes)),
+            Set(ref(sopt, :valve_nodes))
         ) 
     if (is_ideal)
         return node_id in ids

@@ -18,6 +18,40 @@ function _add_slack_node_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     )
 end 
 
+""" potential definition """ 
+function _add_potential_pressure_map_constraints!(
+    sopt::SteadyOptimizer, 
+    opt_model::OptModel; 
+    nlp::Bool = true
+)
+    m = opt_model.model 
+    var = opt_model.variables
+    ids = ref(sopt, :nodes)
+    (isempty(ids)) && (return)
+    b1, b2 = get_eos_coeffs(sopt)
+    is_ideal = isapprox(b2, 0.0)
+
+    if nlp 
+        for i in ids 
+            (is_pressure_node(sopt, i, is_ideal) == false) && (continue)
+            p = var[:pressure][i]
+            potential = var[:potential][i]
+            @NLconstraint(m, potential == (b1/2) * p^2 + (b2/3) * p^3 )
+        end 
+    end 
+    (nlp) && (return)
+    f = x -> (b1/2) * x^2 + (b2/3) * x^3
+    fdash = x -> b1 * x + b2 * x^2
+    for i in ids 
+        (is_pressure_node(sopt, i, is_ideal) == false) && (continue)
+        p_min = ref(sopt, :node, i, "min_pressure") 
+        p_max = ref(sopt, :node, i, "min_pressure")
+        partition = [p_min, (p_min + p_max) * 0.5, p_max]
+        PolyhedralRelaxations.construct_univariate_relaxation!(m, f, 
+            var[:pressure][i], var[:potential][i], partition, false; f_dash = fdash)
+    end 
+end 
+
 """ nodal balance constraints """ 
 function _add_nodal_balance_constraints!(sopt::SteadyOptimizer, opt_model::OptModel)
     m = opt_model.model 
@@ -497,6 +531,7 @@ function _add_constraints!(
     nlp::Bool=true
 )
     _add_slack_node_constraints!(sopt, opt_model)
+    _add_potential_pressure_map_constraints!(sopt, opt_model; nlp=nlp)
     _add_pipe_constraints!(sopt, opt_model, nlp=nlp)
     _add_compressor_constraints!(sopt, opt_model)
     _add_valve_constraints!(sopt, opt_model)
