@@ -29,7 +29,8 @@ end
 """ flow variables for each pipe in the network """ 
 function _add_pipe_variables!(sopt::SteadyOptimizer, 
     opt_model::OptModel; 
-    nlp::Bool=true
+    nlp::Bool=true, 
+    misocp::Bool=false
 )
     m = opt_model.model 
     var = opt_model.variables
@@ -46,6 +47,13 @@ function _add_pipe_variables!(sopt::SteadyOptimizer,
         upper_bound = sign(ref(sopt, :pipe, i, "max_flow")) * ref(sopt, :pipe, i, "max_flow")^2,
         base_name = "fp_mod_fp"
     )
+    (misocp == false) && (return)
+    var[:pipe_flow_direction] = @variable(m, [i in ids], binary = true, base_name = "fp_x")
+    var[:pipe_flow_square] = @variable(m, [i in ids], 
+        lower_bound = ref(sopt, :pipe, i, "min_flow")^2,
+        upper_bound = ref(sopt, :pipe, i, "max_flow")^2,
+        base_name = "fp_sq"
+    )  
 end 
 
 """ flow variables for each compressor in the network """ 
@@ -144,7 +152,8 @@ end
 """ flow and lifted flow variables for each resistor in the network """ 
 function _add_resistor_variables!(sopt::SteadyOptimizer, 
     opt_model::OptModel; 
-    nlp::Bool=true
+    nlp::Bool=true, 
+    misocp::Bool=false
 )
     m = opt_model.model 
     var = opt_model.variables
@@ -161,6 +170,13 @@ function _add_resistor_variables!(sopt::SteadyOptimizer,
         upper_bound = sign(ref(sopt, :resistor, i, "max_flow")) * ref(sopt, :resistor, i, "max_flow")^2,
         base_name = "fr_mod_fr"
     )
+    (misocp == false) && (return)
+    var[:resistor_flow_direction] = @variable(m, [i in ids], binary = true, base_name = "fr_x")
+    var[:resistor_flow_square] = @variable(m, [i in ids], 
+        lower_bound = ref(sopt, :resistor, i, "min_flow")^2,
+        upper_bound = ref(sopt, :resistor, i, "max_flow")^2,
+        base_name = "fr_sq"
+    )  
 end
 
 """ variables for decision groups """ 
@@ -207,17 +223,18 @@ end
 function _add_variables!(sopt::SteadyOptimizer, 
     opt_model::OptModel; 
     nlp::Bool=true, 
+    misocp::Bool=false,
     fixed_withdrawal::Bool=true
 )
     _add_nodal_potential_variables!(sopt, opt_model)
     _add_nodal_pressure_variables!(sopt, opt_model)
-    _add_pipe_variables!(sopt, opt_model, nlp=nlp)
+    _add_pipe_variables!(sopt, opt_model, nlp=nlp, misocp=misocp)
     _add_compressor_variables!(sopt, opt_model)
     _add_valve_variables!(sopt, opt_model)
     _add_control_valve_variables!(sopt, opt_model)
     _add_short_pipe_variables!(sopt, opt_model)
     _add_loss_resistor_variables!(sopt, opt_model)
-    _add_resistor_variables!(sopt, opt_model, nlp=nlp)
+    _add_resistor_variables!(sopt, opt_model, nlp=nlp, misocp=misocp)
     _add_decision_group_variables!(sopt, opt_model)
     _add_injection_variables!(sopt, opt_model)
     if fixed_withdrawal == false 

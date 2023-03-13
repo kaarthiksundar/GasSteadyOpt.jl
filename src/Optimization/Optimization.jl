@@ -1,10 +1,11 @@
-module Optimization
+include("types.jl")
 
-    using JuMP 
-    
-    # submodule import
-    include("../DataProcessing/DataProcessing.jl")
-    using .DataProcessing: NetworkData, ref, params, nominal_values, get_eos_coeffs, get_pressure, get_density, get_potential, is_pressure_node
-    
-    include("types.jl")
-end 
+include("initialize_solution.jl")
+
+include("form/variables.jl")
+include("form/constraints.jl")
+include("form/objective.jl")
+include("form/nlp.jl")
+include("form/lp.jl")
+
+include("initialize_optimizer.jl")

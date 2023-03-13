@@ -83,7 +83,8 @@ end
 function _add_pipe_constraints!(
     sopt::SteadyOptimizer, 
     opt_model::OptModel; 
-    nlp::Bool = true
+    nlp::Bool = true, 
+    misocp::Bool = false
 )
     m = opt_model.model  
     var = opt_model.variables 
@@ -104,18 +105,23 @@ function _add_pipe_constraints!(
         var[:potential][pipe[i]["fr_node"]] - var[:potential][pipe[i]["to_node"]] == 
         resistance[i] * var[:pipe_flow_lifted][i]
     )
-    f = x -> x * abs(x)
-    fdash = x -> 2.0 * x * sign(x)
-    for i in ids 
-        partition = 
-            if pipe[i]["min_flow"] >= 0.0 || pipe[i]["max_flow"] <= 0.0 
-                [pipe[i]["min_flow"], pipe[i]["max_flow"]]
-            else
-                [pipe[i]["min_flow"], 0.0, pipe[i]["max_flow"]] 
-            end 
-        PolyhedralRelaxations.construct_univariate_relaxation!(m, f, 
-            var[:pipe_flow][i], var[:pipe_flow_lifted][i], partition, false; f_dash = fdash)
-    end  
+    if (misocp == false)
+        f = x -> x * abs(x)
+        fdash = x -> 2.0 * x * sign(x)
+        for i in ids 
+            partition = 
+                if pipe[i]["min_flow"] >= 0.0 || pipe[i]["max_flow"] <= 0.0 
+                    [pipe[i]["min_flow"], pipe[i]["max_flow"]]
+                else
+                    [pipe[i]["min_flow"], 0.0, pipe[i]["max_flow"]] 
+                end 
+            PolyhedralRelaxations.construct_univariate_relaxation!(m, f, 
+                var[:pipe_flow][i], var[:pipe_flow_lifted][i], partition, false; f_dash = fdash)
+        end  
+    else 
+        @constraint(m, [i in ids], var[:pipe_flow_square][i] >= var[:pipe_flow][i])
+        # TODO: add mccormick relaxation
+    end 
 end 
 
 """ add compressor constraints """
@@ -336,7 +342,8 @@ end
 function _add_resistor_constraints!(
     sopt::SteadyOptimizer, 
     opt_model::OptModel; 
-    nlp::Bool = true
+    nlp::Bool = true, 
+    misocp::Bool = true
 )
     m = opt_model.model  
     var = opt_model.variables 
@@ -357,17 +364,22 @@ function _add_resistor_constraints!(
         var[:potential][resistor[i]["fr_node"]] - var[:potential][resistor[i]["to_node"]] == 
         resistance[i] * var[:resistor_flow_lifted][i]
     )
-    f = x -> x * abs(x)
-    fdash = x -> 2.0 * x * sign(x)
-    for i in ids 
-        partition = 
-            if resistor[i]["min_flow"] >= 0.0 || resistor[i]["max_flow"] <= 0.0 
-                [resistor[i]["min_flow"], resistor[i]["max_flow"]]
-            else
-                [resistor[i]["min_flow"], 0.0, resistor[i]["max_flow"]] 
-            end 
-        PolyhedralRelaxations.construct_univariate_relaxation!(m, f, 
-            var[:resistor_flow][i], var[:resistor_flow_lifted][i], partition, false; f_dash = fdash)
+    if (misocp == false)
+        f = x -> x * abs(x)
+        fdash = x -> 2.0 * x * sign(x)
+        for i in ids 
+            partition = 
+                if resistor[i]["min_flow"] >= 0.0 || resistor[i]["max_flow"] <= 0.0 
+                    [resistor[i]["min_flow"], resistor[i]["max_flow"]]
+                else
+                    [resistor[i]["min_flow"], 0.0, resistor[i]["max_flow"]] 
+                end 
+            PolyhedralRelaxations.construct_univariate_relaxation!(m, f, 
+                var[:resistor_flow][i], var[:resistor_flow_lifted][i], partition, false; f_dash = fdash)
+        end
+    else
+        @constraint(m, [i in ids], var[:resistor_flow_square][i] >= var[:resistor_flow][i])
+        # TODO: add mccormick relaxation
     end  
 end 
 
@@ -528,17 +540,18 @@ end
 function _add_constraints!(
     sopt::SteadyOptimizer, 
     opt_model::OptModel; 
-    nlp::Bool=true
+    nlp::Bool=true, 
+    misocp::Bool=false
 )
     _add_slack_node_constraints!(sopt, opt_model)
     _add_potential_pressure_map_constraints!(sopt, opt_model; nlp=nlp)
-    _add_pipe_constraints!(sopt, opt_model, nlp=nlp)
+    _add_pipe_constraints!(sopt, opt_model, nlp=nlp, misocp=misocp)
     _add_compressor_constraints!(sopt, opt_model)
     _add_valve_constraints!(sopt, opt_model)
     _add_control_valve_constraints!(sopt, opt_model)
     _add_short_pipe_constraints!(sopt, opt_model)
     _add_loss_resistor_constraints!(sopt, opt_model)
-    _add_resistor_constraints!(sopt, opt_model, nlp=nlp)
+    _add_resistor_constraints!(sopt, opt_model, nlp=nlp, misocp=misocp)
     _add_decision_group_constraints!(sopt, opt_model)
     _add_nodal_balance_constraints!(sopt, opt_model)
 end 

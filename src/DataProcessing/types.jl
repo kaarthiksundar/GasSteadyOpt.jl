@@ -1,3 +1,15 @@
+struct ControlData 
+    data::Dict{String,Any}
+    nominal_values::Dict{Symbol,Any}
+    params::Dict{Symbol,Any}
+end 
+
+struct StateGuessData 
+    data::Dict{String,Any}
+    nominal_values::Dict{Symbol,Any}
+    params::Dict{Symbol,Any}
+end 
+
 struct NetworkData 
     data::Dict{String,Any}
     ref::Dict{Symbol,Any}
@@ -13,11 +25,11 @@ ref(net::NetworkData, key::Symbol) = get(net.ref, key, Dict())
 ref(net::NetworkData, key::Symbol, id::Int64) = net.ref[key][id]
 ref(net::NetworkData, key::Symbol, id::Int64, field) = net.ref[key][id][field]
 
-params(net::NetworkData) = net.params
-params(net::NetworkData, key::Symbol) = net.params[key]
+params(net::Union{NetworkData,ControlData,StateGuessData}) = net.params
+params(net::Union{NetworkData,ControlData,StateGuessData}, key::Symbol) = net.params[key]
 
-nominal_values(net::NetworkData) = net.nominal_values
-nominal_values(net::NetworkData, key::Symbol) = net.nominal_values[key]
+nominal_values(net::Union{NetworkData,ControlData,StateGuessData}) = net.nominal_values
+nominal_values(net::Union{NetworkData,ControlData,StateGuessData}, key::Symbol) = net.nominal_values[key]
 
 get_eos_coeffs(net::NetworkData) = 
     net.pu_eos_coeffs(nominal_values(net), params(net))

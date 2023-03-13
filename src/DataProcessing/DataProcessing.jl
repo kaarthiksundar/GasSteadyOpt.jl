@@ -19,6 +19,8 @@ module DataProcessing
     
     include("parsers.jl")
 
+    export NetworkData
+
     const _EXCLUDE_SYMBOLS = [Symbol(@__MODULE__), :eval, :include]
     for sym in names(@__MODULE__, all = true)
         sym_string = string(sym)

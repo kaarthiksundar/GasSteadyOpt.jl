@@ -11,7 +11,10 @@ struct SteadyOptimizer
     net::NetworkData 
     objective_type::ObjectiveType 
     nonlinear_full::OptModel 
-    linear_relax::OptModel 
-    misoc_relax::OptModel 
+    linear_relaxation::OptModel 
+    misoc_relaxation::OptModel 
+    solution_nonlinear::Solution
+    solution_linear::Solution
+    solution_misoc::Solution
 end 
 
