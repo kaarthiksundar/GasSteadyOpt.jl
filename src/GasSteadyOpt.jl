@@ -8,7 +8,7 @@ include("useful_scripts/apply_functions.jl")
 
 # submodule import
 include("./DataProcessing/DataProcessing.jl")
-using .DataProcessing: NetworkData, ref, params, nominal_values, 
+import .DataProcessing: NetworkData, ref, params, nominal_values, 
     get_eos_coeffs, get_pressure, get_density, get_potential, is_pressure_node,
     parse_network_data
 

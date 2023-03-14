@@ -513,8 +513,8 @@ function _add_decision_flow_direction!(sopt::SteadyOptimizer, opt_model::OptMode
                 (component_type == :valve) && (expr_dict = valve_expr[component_id])
                 (component_type == :control_valve) && (expr_dict = control_valve_expr[component_id])
                 (component_type == :compressor) && (expr_dict = compressor_expr[component_id])
-                flow_min = ref(opt, component_type, component_id, "min_flow")
-                flow_max = ref(opt, component_type, component_id, "max_flow")
+                flow_min = ref(sopt, component_type, component_id, "min_flow")
+                flow_max = ref(sopt, component_type, component_id, "max_flow")
                 on_off = val["on_off"] 
                 (on_off == false) && (continue)
                 flow_direction = get(val, "flow_direction", -1)

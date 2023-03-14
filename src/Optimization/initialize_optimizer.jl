@@ -16,9 +16,9 @@ function initialize_optimizer(net::NetworkData;
     )    
 
     _initialize_solution!(sopt)
-    (nonlinear_model) && (create_nlp!(sopt.nonlinear_full))
-    (linear_relaxation) && (create_lp!(sopt.linear_relaxation))
-    (misoc_relaxation) && (create_misoc!(sopt.misoc_relaxation))
+    (nonlinear_model) && (create_nlp!(sopt))
+    (linear_relaxation) && (create_lp!(sopt))
+    (misoc_relaxation) && (create_misocp!(sopt))
 
     return sopt
 end 

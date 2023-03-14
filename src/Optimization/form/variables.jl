@@ -50,8 +50,10 @@ function _add_pipe_variables!(sopt::SteadyOptimizer,
     (misocp == false) && (return)
     var[:pipe_flow_direction] = @variable(m, [i in ids], binary = true, base_name = "fp_x")
     var[:pipe_flow_square] = @variable(m, [i in ids], 
-        lower_bound = ref(sopt, :pipe, i, "min_flow")^2,
-        upper_bound = ref(sopt, :pipe, i, "max_flow")^2,
+        lower_bound = 
+            (ref(sopt, :pipe, i, "min_flow") <= 0 && 
+            ref(sopt, :pipe, i, "max_flow") >= 0) ? 0.0 : min(ref(sopt, :pipe, i, "min_flow")^2, ref(sopt, :pipe, i, "max_flow")^2),
+        upper_bound = max(ref(sopt, :pipe, i, "min_flow")^2, ref(sopt, :pipe, i, "max_flow")^2),
         base_name = "fp_sq"
     )  
 end 
@@ -173,8 +175,10 @@ function _add_resistor_variables!(sopt::SteadyOptimizer,
     (misocp == false) && (return)
     var[:resistor_flow_direction] = @variable(m, [i in ids], binary = true, base_name = "fr_x")
     var[:resistor_flow_square] = @variable(m, [i in ids], 
-        lower_bound = ref(sopt, :resistor, i, "min_flow")^2,
-        upper_bound = ref(sopt, :resistor, i, "max_flow")^2,
+        lower_bound = 
+        (ref(sopt, :resistor, i, "min_flow") <= 0 && 
+            ref(sopt, :resistor, i, "max_flow") >= 0) ? 0.0 : min(ref(sopt, :resistor, i, "min_flow")^2, ref(sopt, :resistor, i, "max_flow")^2),
+        upper_bound = max(ref(sopt, :resistor, i, "min_flow")^2, ref(sopt, :resistor, i, "max_flow")^2),
         base_name = "fr_sq"
     )  
 end
