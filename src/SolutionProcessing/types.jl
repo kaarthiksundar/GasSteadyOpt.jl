@@ -29,6 +29,7 @@ end
 struct Solution 
     state::Dict{Symbol,Any}
     control::Dict{Symbol,Any}
+    state_guess::Dict{Symbol,Any}
 end 
 
-Solution() = Solution(initialize_state(), initialize_control())
+Solution() = Solution(initialize_state(), initialize_control(), initialize_state())

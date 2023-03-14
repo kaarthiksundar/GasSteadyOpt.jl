@@ -119,8 +119,14 @@ function _add_pipe_constraints!(
                 var[:pipe_flow][i], var[:pipe_flow_lifted][i], partition, false; f_dash = fdash)
         end  
     else 
-        @constraint(m, [i in ids], var[:pipe_flow_square][i] >= var[:pipe_flow][i])
-        # TODO: add mccormick relaxation
+        @constraint(m, [i in ids], var[:pipe_flow_square][i] >= var[:pipe_flow][i] * var[:pipe_flow][i])
+        f_hat = var[:pipe_flow_lifted]
+        f_sqr = var[:pipe_flow_square]
+        z = var[:pipe_flow_direction]
+        @constraint(m, [i in ids], f_hat[i] >= (-1)*f_sqr[i] + (2*z[i]-1)*lower_bound(f_sqr[i]) - (-1)*lower_bound(f_sqr[i]))
+        @constraint(m, [i in ids], f_hat[i] >= (+1)*f_sqr[i] + (2*z[i]-1)*upper_bound(f_sqr[i]) - (+1)*upper_bound(f_sqr[i]))
+        @constraint(m, [i in ids], f_hat[i] <= (+1)*f_sqr[i] + (2*z[i]-1)*lower_bound(f_sqr[i]) - (+1)*lower_bound(f_sqr[i]))
+        @constraint(m, [i in ids], f_hat[i] <= (-1)*f_sqr[i] + (2*z[i]-1)*upper_bound(f_sqr[i]) - (-1)*upper_bound(f_sqr[i]))
     end 
 end 
 
@@ -378,8 +384,14 @@ function _add_resistor_constraints!(
                 var[:resistor_flow][i], var[:resistor_flow_lifted][i], partition, false; f_dash = fdash)
         end
     else
-        @constraint(m, [i in ids], var[:resistor_flow_square][i] >= var[:resistor_flow][i])
-        # TODO: add mccormick relaxation
+        @constraint(m, [i in ids], var[:resistor_flow_square][i] >= var[:resistor_flow][i] * var[:resistor_flow][i])
+        f_hat = var[:resistor_flow_lifted]
+        f_sqr = var[:resistor_flow_square]
+        z = var[:resistor_flow_direction]
+        @constraint(m, [i in ids], f_hat[i] >= (-1)*f_sqr[i] + (2*z[i]-1)*lower_bound(f_sqr[i]) - (-1)*lower_bound(f_sqr[i]))
+        @constraint(m, [i in ids], f_hat[i] >= (+1)*f_sqr[i] + (2*z[i]-1)*upper_bound(f_sqr[i]) - (+1)*upper_bound(f_sqr[i]))
+        @constraint(m, [i in ids], f_hat[i] <= (+1)*f_sqr[i] + (2*z[i]-1)*lower_bound(f_sqr[i]) - (+1)*lower_bound(f_sqr[i]))
+        @constraint(m, [i in ids], f_hat[i] <= (-1)*f_sqr[i] + (2*z[i]-1)*upper_bound(f_sqr[i]) - (-1)*upper_bound(f_sqr[i]))
     end  
 end 
 
