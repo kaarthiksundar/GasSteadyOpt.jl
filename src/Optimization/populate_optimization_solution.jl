@@ -108,7 +108,11 @@ function populate_nodal_injection!(control, var, net)
                 total_withdrawal += JuMP.value(withdrawal[id])
             end 
         end 
-        control[:node][i]["injection"] = total_injection - total_withdrawal
+        if ref(net, :node, i, "is_slack") 
+            control[:node][i]["pressure"] = ref(net, :node, i, "slack_pressure")
+        else 
+            control[:node][i]["injection"] = total_injection - total_withdrawal
+        end 
     end 
 end 
 
@@ -129,10 +133,30 @@ function populate_compressor_control_valve_status!(control, var, net)
             active_status = string(comp) * "_active" |> Symbol
             bypass_status = string(comp) * "_bypass" |> Symbol
             if haskey(var[active_status], i)
-                control[comp][i]["active"] = (JuMP.value(x) > 0.9) ? 1 : 0 
+                control[comp][i]["active"] = (JuMP.value(var[active_status][i]) > 0.9) ? 1 : 0 
             end 
             if haskey(var[bypass_status], i)
-                control[comp][i]["bypass"] = (JuMP.value(x) > 0.9) ? 1 : 0 
+                control[comp][i]["bypass"] = (JuMP.value(var[bypass_status][i]) > 0.9) ? 1 : 0 
+            end 
+            (control[comp][i]["status"] == 0) && (continue)
+            fr_node = ref(net, comp, i, "fr_node")
+            to_node = ref(net, comp, i, "to_node")
+            _, b2 = get_eos_coeffs(sopt)
+            is_ideal = isapprox(b2, 0.0)
+            if comp == :compressor 
+                if is_ideal 
+                    pi_fr = JuMP.value(var[:potential][fr_node])
+                    pi_to = JuMP.value(var[:potential][to_node])
+                    control[comp][i]["ratio"] = sqrt(pi_to/pi_fr)
+                else 
+                    p_fr = JuMP.value(var[:pressure][fr_node])
+                    p_to = JuMP.value(var[:pressure][to_node])
+                    control[comp][i]["ratio"] = p_to/p_fr
+                end 
+            else 
+                p_fr = JuMP.value(var[:pressure][fr_node])
+                p_to = JuMP.value(var[:pressure][to_node])
+                control[comp][i]["differential"] = p_fr - p_to
             end 
         end 
     end 

@@ -20,8 +20,8 @@ initialize_state()::Dict{Symbol,Any} = Dict{Symbol,Any}(
 )
 
 @enum ControlType begin
-    c_ratio_control = 0
-    c_additive_control = 1 
+    pressure_ratio_control = 0
+    pressure_differential_control = 1 
     flow_control = 2
     pressure_control = 3
     unknown_control = 100
