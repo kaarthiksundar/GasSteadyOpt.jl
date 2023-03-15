@@ -19,7 +19,9 @@ module DataProcessing
     
     include("parsers.jl")
 
-    export NetworkData
+    TOL = 1.0e-7
+
+    export TOL
 
     const _EXCLUDE_SYMBOLS = [Symbol(@__MODULE__), :eval, :include]
     for sym in names(@__MODULE__, all = true)

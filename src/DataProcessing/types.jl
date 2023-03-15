@@ -56,8 +56,6 @@ function is_pressure_node(net::NetworkData, node_id, is_ideal)
     end 
 end 
 
-TOL = 1.0e-7
-
 function find_ub(net::NetworkData, val::Float64, ub::Float64)::Float64
     @assert ub > 0
     while get_potential(net, ub) < val
