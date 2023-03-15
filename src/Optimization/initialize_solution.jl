@@ -1,9 +1,11 @@
 function _initialize_solution!(net::NetworkData, solution::Solution) 
     state = solution.state 
     control = solution.control
+    state_guess = solution.state_guess
     
     for (i, _) in ref(net, :node)
         state[:node][i] = Dict("pressure" =>  NaN, "potential" => NaN) 
+        state_guess[:node][i] = Dict("pressure" =>  NaN, "potential" => NaN) 
         control[:node][i] = Dict("injection" => NaN)
     end     
     
@@ -11,6 +13,7 @@ function _initialize_solution!(net::NetworkData, solution::Solution)
     for comp in flow_components 
         for (i, _) in ref(net, comp)
             state[comp][i] = Dict("flow" => NaN) 
+            state_guess[comp][i] = Dict("flow" => NaN) 
         end 
     end 
 
@@ -19,6 +22,10 @@ function _initialize_solution!(net::NetworkData, solution::Solution)
         for (i, _) in ref(net, comp)
             control[comp][i] = Dict() 
         end 
+    end 
+
+    for (i, _) in ref(net, :decision_group) 
+        control[:decision_group][i] = nothing 
     end 
 end 
 

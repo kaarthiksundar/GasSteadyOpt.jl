@@ -3,6 +3,7 @@ initialize_control()::Dict{Symbol,Any} = Dict{Symbol,Any}(
     :compressor => Dict{Any,Any}(), 
     :control_valve => Dict{Any,Any}(), 
     :valve => Dict{Any,Any}(),
+    :decision_group => Dict{Any,Any}()
     :is_empty => true
 )
 

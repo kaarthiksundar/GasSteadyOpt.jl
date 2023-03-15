@@ -2,7 +2,6 @@ function _parse_network_data(data_folder::AbstractString,
     nomination_case::AbstractString; 
     slack_pressure::Float64=NaN
 )
-    
     # check for zip file
     if endswith(data_folder, ".zip")
         zip_reader = ZipFile.Reader(data_folder) 
