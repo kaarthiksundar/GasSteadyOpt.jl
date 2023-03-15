@@ -55,4 +55,37 @@ function is_pressure_node(net::NetworkData, node_id, is_ideal)
         return node_id in union(ids, Set(ref(net, :compressor_nodes)))
     end 
 end 
-    
+
+TOL = 1.0e-7
+
+function find_ub(net::NetworkData, val::Float64, ub::Float64)::Float64
+    @assert ub > 0
+    while get_potential(net, ub) < val
+        ub = 1.5 * ub
+    end 
+    return ub
+end 
+
+function find_lb(net::NetworkData, val::Float64, lb::Float64)::Float64
+    @assert lb < 0
+    while get_potential(net, lb) > val
+        lb = 1.5 * lb
+    end 
+    return lb
+end 
+
+function bisect(net::NetworkData, lb::Float64, ub::Float64, val::Float64)::Float64  
+    @assert ub > lb
+    mb = 1.0
+    while (ub - lb) > TOL
+        mb = (ub + lb) / 2.0
+        if get_potential(net, mb) > val
+            ub = mb
+        else
+            lb = mb 
+        end
+    end
+    return mb
+end
+
+invert_positive_potential(net::NetworkData, val::Float64) = bisect(net, 0.0, find_ub(net, val, 1.0), val)

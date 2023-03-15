@@ -12,10 +12,19 @@ function populate_nonlinear_model_solution!(sopt::SteadyOptimizer)
     end 
     state = sopt.solution_nonlinear.state 
     control = sopt.solution_nonlinear.control
+    
+    # populate control solution 
     populate_nodal_injection!(control, var, net)
     populate_valve_status!(control, var, net)
     populate_compressor_control_valve_status!(control, var, net)
     populate_decision_group_selector!(control, var, net)
+
+    # populate state solution 
+    populate_flows!(state, var, net)
+    populate_nodal_quantities!(state, var, net)
+
+    state[:is_empty] = false 
+    control[:is_empty] = false
 end 
 
 function populate_linear_relaxation_solution!(sopt::SteadyOptimizer)
@@ -32,10 +41,19 @@ function populate_linear_relaxation_solution!(sopt::SteadyOptimizer)
     end 
     state = sopt.solution_linear.state_guess
     control = sopt.solution_linear.control
+    
+    # populate control solution 
     populate_nodal_injection!(control, var, net)
     populate_valve_status!(control, var, net)
     populate_compressor_control_valve_status!(control, var, net)
     populate_decision_group_selector!(control, var, net)
+
+    # populate state solution 
+    populate_flows!(state, var, net)
+    populate_nodal_quantities!(state, var, net)
+
+    state[:is_empty] = false 
+    control[:is_empty] = false
 end 
 
 function populate_misoc_relaxation_solution!(sopt::SteadyOptimizer)
@@ -52,10 +70,19 @@ function populate_misoc_relaxation_solution!(sopt::SteadyOptimizer)
     end 
     state = sopt.solution_misoc.state_guess
     control = sopt.solution_misoc.control
+    
+    # populate control solution 
     populate_nodal_injection!(control, var, net)
     populate_valve_status!(control, var, net)
     populate_compressor_control_valve_status!(control, var, net)
     populate_decision_group_selector!(control, var, net)
+
+    # populate state solution 
+    populate_flows!(state, var, net)
+    populate_nodal_quantities!(state, var, net)
+
+    state[:is_empty] = false 
+    control[:is_empty] = false
 end 
 
 function populate_nodal_injection!(control, var, net)
@@ -76,7 +103,7 @@ function populate_nodal_injection!(control, var, net)
         end 
         for id in exits_at_node 
             if isempty(withdrawal)
-                total_withdrawal += ref(net, :exit, id, "max_injection")
+                total_withdrawal += ref(net, :exit, id, "max_withdrawal")
             else 
                 total_withdrawal += JuMP.value(withdrawal[id])
             end 
@@ -111,12 +138,40 @@ function populate_compressor_control_valve_status!(control, var, net)
     end 
 end 
 
-function populate_decision_group_selectors!(control, var, net)
+function populate_decision_group_selector!(control, var, net)
     ids = ref(net, :decision_group) |> keys
     (isempty(ids)) && (return)
     for i in ids 
-        x = JuMP.value.(var[:decision_group_selector][i])
-        chosen_index = findfirst(y -> y > 0.9, x)
-        control[:decision_group][i] = chosen_index
+        if ref(net, :decision_group, i, "num_decisions") != 1
+            x = JuMP.value.(var[:decision_group_selector][i])
+            chosen_index = findfirst(y -> y > 0.9, x)
+            control[:decision_group][i] = chosen_index
+        else 
+            control[:decision_group][i] = 1 
+        end 
+    end 
+end 
+
+function populate_flows!(state, var, net)
+    flow_components = [:pipe, :resistor, :loss_resistor, :short_pipe, :compressor, :control_valve, :valve]
+    for comp in flow_components 
+        for (i, _) in ref(net, comp)
+            k = string(comp) * "_flow" |> Symbol
+            f = var[k][i]
+            state[comp][i]["flow"] = JuMP.value(f)
+        end 
+    end 
+end 
+
+function populate_nodal_quantities!(state, var, net) 
+    p = var[:pressure]
+    potential = var[:potential]
+    for i in ref(net, :node) |> keys
+        state[:node][i]["potential"] = JuMP.value(potential[i])
+        (haskey(p, i)) && (state[:node][i]["pressure"] = JuMP.value(p[i]); continue)
+        if (state[:node][i]["potential"] > 0.0) 
+            state[:node][i]["pressure"] = 
+                invert_positive_potential(net, state[:node][i]["potential"])
+        end 
     end 
 end 

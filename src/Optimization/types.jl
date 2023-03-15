@@ -35,3 +35,4 @@ get_density(sopt::SteadyOptimizer, pressure) = get_density(sopt.net, pressure)
 get_potential(sopt::SteadyOptimizer, pressure) = get_potential(sopt.net, pressure)
 
 is_pressure_node(sopt::SteadyOptimizer, node_id, is_ideal) = is_pressure_node(sopt.net, node_id, is_ideal)
+

@@ -10,7 +10,7 @@ include("useful_scripts/apply_functions.jl")
 include("./DataProcessing/DataProcessing.jl")
 import .DataProcessing: NetworkData, ref, params, nominal_values, 
     get_eos_coeffs, get_pressure, get_density, get_potential, is_pressure_node,
-    parse_network_data
+    parse_network_data, invert_positive_potential
 
 include("./SolutionProcessing/SolutionProcessing.jl")
 using .SolutionProcessing: Solution
