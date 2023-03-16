@@ -19,6 +19,7 @@ get_pressure(ss::SteadySimulator, density) = get_pressure(ss.net, density)
 get_density(ss::SteadySimulator, pressure) = get_density(ss.net, pressure)
 
 get_potential(ss::SteadySimulator, pressure) = get_potential(ss.net, pressure)
+get_potential_derivative(ss::SteadySimulator, pressure) = get_potential_derivative(ss.net, pressure)
 
 is_pressure_node(ss::SteadySimulator, node_id, is_ideal) = is_pressure_node(ss.net, node_id, is_ideal)
 
@@ -39,6 +40,10 @@ function control(ss::SteadySimulator,
     @error "control available only for nodes, compressors, and control_valves"
     return ControlType::unknown_control, NaN
 end
+
+is_compressor_off(ss::SteadySimulator, id::Int64)::Bool = ss.solution.control[:compressor][id]["status"] == 0
+is_control_valve_off(ss::SteadySimulator, id::Int64)::Bool = ss.solution.control[:control_valve][id]["status"] == 0
+is_valve_off(ss::SteadySimulator, id::Int64)::Bool = ss.solution.control[:valve][id]["status"] == 0
 
 function get_nodal_control(ss::SteadySimulator,
     id::Int64)::Tuple{ControlType,Float64}

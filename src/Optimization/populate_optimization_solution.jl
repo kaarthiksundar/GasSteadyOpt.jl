@@ -18,6 +18,7 @@ function populate_nonlinear_model_solution!(sopt::SteadyOptimizer)
     populate_valve_status!(control, var, net)
     populate_compressor_control_valve_status!(control, var, net)
     populate_decision_group_selector!(control, var, net)
+    populate_entry_exit_flows!(control, var, net)
 
     # populate state solution 
     populate_flows!(state, var, net)
@@ -47,6 +48,7 @@ function populate_linear_relaxation_solution!(sopt::SteadyOptimizer)
     populate_valve_status!(control, var, net)
     populate_compressor_control_valve_status!(control, var, net)
     populate_decision_group_selector!(control, var, net)
+    populate_entry_exit_flows!(control, var, net)
 
     # populate state solution 
     populate_flows!(state, var, net)
@@ -76,6 +78,7 @@ function populate_misoc_relaxation_solution!(sopt::SteadyOptimizer)
     populate_valve_status!(control, var, net)
     populate_compressor_control_valve_status!(control, var, net)
     populate_decision_group_selector!(control, var, net)
+    populate_entry_exit_flows!(control, var, net)
 
     # populate state solution 
     populate_flows!(state, var, net)
@@ -90,29 +93,20 @@ function populate_nodal_injection!(control, var, net)
         entries_at_node = ref(net, :entries_at_node, i)
         exits_at_node = ref(net, :exits_at_node, i)
         (isempty(entries_at_node) && isempty(exits_at_node)) && (continue)
-        injection = get(var, "injection", Dict())
-        withdrawal = get(var, "withdrawal", Dict())
+        injection = var[:injection]
         total_injection = 0.0 
         total_withdrawal = 0.0
         for id in entries_at_node 
-            if isempty(injection)
-                total_injection += ref(net, :entry, id, "max_injection")
-            else 
-                total_injection += JuMP.value(injection[id])
-            end 
+            total_injection += JuMP.value(injection[id])
         end 
         for id in exits_at_node 
-            if isempty(withdrawal)
-                total_withdrawal += ref(net, :exit, id, "max_withdrawal")
-            else 
-                total_withdrawal += JuMP.value(withdrawal[id])
-            end 
+           total_withdrawal += ref(net, :exit, id, "max_withdrawal")
         end 
         if ref(net, :node, i, "is_slack") 
             control[:node][i]["pressure"] = ref(net, :node, i, "slack_pressure")
         else 
             control[:node][i]["injection"] = total_injection - total_withdrawal
-        end 
+        end  
     end 
 end 
 
@@ -183,6 +177,19 @@ function populate_decision_group_selector!(control, var, net)
             control[component][component_id]["flow_direction"] = 
                 get(val, "flow_direction", -1)
         end 
+    end 
+end 
+
+function populate_entry_exit_flows!(control, var, net)
+    injection = var[:injection]
+
+    for i in ref(net, :entry) |> keys 
+        (isempty(injection)) && (control[:entry][i]["injection"] = ref(net, :entry, i, "max_injection"); continue)
+        control[:entry][i]["injection"] = JuMP.value(injection[i])
+    end 
+
+    for i in ref(net, :exit) |> keys 
+        control[:exit][i]["withdrawal"] = ref(net, :exit, i, "max_withdrawal")
     end 
 end 
 

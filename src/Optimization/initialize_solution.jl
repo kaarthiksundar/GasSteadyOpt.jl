@@ -8,6 +8,14 @@ function _initialize_solution!(net::NetworkData, solution::Solution)
         state_guess[:node][i] = Dict("pressure" =>  NaN, "potential" => NaN) 
         control[:node][i] = Dict("injection" => NaN, "pressure" => NaN)
     end     
+
+    for (i, _) in ref(net, :entry)
+        control[:entry][i] = Dict("injection" => NaN)
+    end 
+
+    for (i, _) in ref(net, :exit)
+        control[:exit][i] = Dict("withdrawal" => NaN)
+    end 
     
     flow_components = [:pipe, :resistor, :loss_resistor, :short_pipe, :compressor, :control_valve, :valve]
     for comp in flow_components 

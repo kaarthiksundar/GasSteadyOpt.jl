@@ -4,6 +4,8 @@ initialize_control()::Dict{Symbol,Any} = Dict{Symbol,Any}(
     :control_valve => Dict{Any,Any}(), 
     :valve => Dict{Any,Any}(),
     :decision_group => Dict{Any,Any}(),
+    :entry => Dict{Any,Any}(), 
+    :exit => Dict{Any,Any}(),
     :is_empty => true
 )
 

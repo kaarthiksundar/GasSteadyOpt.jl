@@ -43,6 +43,11 @@ function get_potential(net::NetworkData, pressure)
     return (b1/2) * pressure^2 + (b2/3) * pressure^3
 end 
 
+function get_potential_derivative(net::NetworkData, pressure) 
+    b1, b2 = get_eos_coeffs(net)
+    return b1 * pressure + b2 * pressure^2
+end 
+
 function is_pressure_node(net::NetworkData, node_id, is_ideal)
     ids = union(
             Set(ref(net, :control_valve_nodes)), 
