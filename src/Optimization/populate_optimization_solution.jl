@@ -174,6 +174,16 @@ function populate_decision_group_selector!(control, var, net)
             control[:decision_group][i] = 1 
         end 
     end 
+    for (dg, id) in control[:decision_group]
+        decision = ref(net, :decision_group, dg, "decisions")[id]
+        for i in decision |> keys 
+            component = first(i)
+            component_id = last(i)
+            val = decision[i]
+            control[component][component_id]["flow_direction"] = 
+                get(val, "flow_direction", -1)
+        end 
+    end 
 end 
 
 function populate_flows!(state, var, net)

@@ -1,4 +1,4 @@
-name = "GasSteadyOpt"
+name = "NGSteady"
 uuid = "f6d1e027-d78d-4ba8-b381-a01f8a969aa7"
 authors = ["Kaarthik Sundar"]
 version = "0.1.0"

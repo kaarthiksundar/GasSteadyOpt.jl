@@ -13,7 +13,7 @@ import .DataProcessing: NetworkData, ref, params, nominal_values,
     parse_network_data, invert_positive_potential, TOL
 
 include("./SolutionProcessing/SolutionProcessing.jl")
-using .SolutionProcessing: Solution
+using .SolutionProcessing: Solution, ControlType
 
 include("optimization/optimization.jl")
 

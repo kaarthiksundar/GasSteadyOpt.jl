@@ -31,51 +31,37 @@ initial_control_valve_flow(ss::SteadySimulator, id::Int64) = ss.solution.state_g
 initial_valve_flow(ss::SteadySimulator, id::Int64) = ss.solution.state_guess[:valve][id]["flow"]
 initial_nodal_pressure(ss::SteadySimulator, id::Int64) = ss.solution.state_guess[:node][id]["pressure"]
 
-
-
 function control(ss::SteadySimulator,
-    key::Symbol, id::Int64)::Tuple{CONTROL_TYPE,Float64}
+    key::Symbol, id::Int64)::Tuple{ControlType,Float64}
     (key == :node) && (return get_nodal_control(ss, id))
     (key == :compressor) && (return get_compressor_control(ss, id))
     (key == :control_valve) && (return get_control_valve_control(ss, id))
     @error "control available only for nodes, compressors, and control_valves"
-    return CONTROL_TYPE::unknown_control, 0.0
+    return ControlType::unknown_control, NaN
 end
 
-
 function get_nodal_control(ss::SteadySimulator,
-    id::Int64)::Tuple{CONTROL_TYPE,Float64}
-    if !haskey(ss.boundary_conditions[:node], id)
-        return flow_control, 0.0
-    end
-    control_type = ss.boundary_conditions[:node][id]["control_type"]
-    val = ss.boundary_conditions[:node][id]["val"]
-    return control_type, val
+    id::Int64)::Tuple{ControlType,Float64}
+    injection = ss.solution.control[:node][id]["injection"]
+    pressure = ss.solution.control[:node][id]["pressure"]
+    (isnan(injection) && isnan(pressure)) && (return ControlType::flow_control, 0.0)
+    (isnan(injection)) && (return ControlType::pressure_control, pressure)
+    return ControlType::flow_control, injection 
 end
 
 function get_compressor_control(ss::SteadySimulator,
-    id::Int64)::Tuple{CONTROL_TYPE,Float64}
-    control_type = ss.boundary_conditions[:compressor][id]["control_type"]
-    val = ss.boundary_conditions[:compressor][id]["val"]
-    return CONTROL_TYPE(control_type), val
+    id::Int64)::Tuple{ControlType,Float64}
+    ratio = ss.solution.control[:compressor][id]["ratio"]
+    return ControlType::pressure_ratio_control, ratio
 end
 
 function get_control_valve_control(ss::SteadySimulator,
-    id::Int64)::Tuple{CONTROL_TYPE,Float64}
-    control_type = ss.boundary_conditions[:control_valve][id]["control_type"]
-    val = ss.boundary_conditions[:control_valve][id]["val"]
-    return CONTROL_TYPE(control_type), val
+    id::Int64)::Tuple{ControlType,Float64}
+    differential = ss.solution.control[:control_valve][id]["differential"]
+    return ControlType::pressure_differential_control, differential
 end
 
-@enum CONTROL_TYPE begin
-    c_ratio_control = 0
-    discharge_pressure_control = 1
-    flow_control = 2
-    pressure_control = 3
-    unknown_control = 100
-end
-
-@enum SOLVER_STATUS begin 
+@enum SolverStatus begin 
     unique_physical_solution = 0 
     nl_solve_failure = 1 
     unique_unphysical_solution = 2 
@@ -83,7 +69,7 @@ end
 end
 
 struct SolverReturn 
-    status::SOLVER_STATUS
+    status::SolverStatus
     iterations::Int 
     residual_norm::Float64 
     time::Float64 
