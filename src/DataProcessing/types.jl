@@ -38,6 +38,8 @@ get_pressure(net::NetworkData, density) =
 get_density(net::NetworkData, pressure) = 
     net.pu_pressure_to_pu_density(pressure, nominal_values(net), params(net))
 
+is_ideal(net::NetworkData) = last(get_eos_coeffs(net)) ≈ 0.0
+
 function get_potential(net::NetworkData, pressure)
     b1, b2 = get_eos_coeffs(net)
     return (b1/2) * pressure^2 + (b2/3) * pressure^3

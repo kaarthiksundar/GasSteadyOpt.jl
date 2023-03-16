@@ -4,8 +4,7 @@ function _add_slack_node_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     var = opt_model.variables
     ids = ref(sopt, :slack_nodes)
     (isempty(ids)) && (return)
-    _, b2 = get_eos_coeffs(sopt)
-    is_ideal = isapprox(b2, 0.0)
+    is_ideal = is_ideal(sopt)
     
     @constraint(m, [i in ids], 
         var[:potential][i] == 
@@ -28,8 +27,7 @@ function _add_potential_pressure_map_constraints!(
     var = opt_model.variables
     ids = ref(sopt, :nodes)
     (isempty(ids)) && (return)
-    b1, b2 = get_eos_coeffs(sopt)
-    is_ideal = isapprox(b2, 0.0)
+    is_ideal = is_ideal(sopt)
 
     if nlp 
         for i in ids 
@@ -137,8 +135,7 @@ function _add_compressor_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     ids = keys(ref(sopt, :compressor))
     (isempty(ids)) && (return)
     compressor = ref(sopt, :compressor)
-    _, b2 = get_eos_coeffs(sopt)
-    is_ideal = isapprox(b2, 0.0)
+    is_ideal = is_ideal(sopt)
     if is_ideal
         for i in ids 
             flow = var[:compressor_flow][i]
@@ -299,8 +296,7 @@ function _add_short_pipe_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     ids = keys(ref(sopt, :short_pipe))
     (isempty(ids)) && (return)
     sp = ref(sopt, :short_pipe)
-    _, b2 = get_eos_coeffs(sopt)
-    is_ideal = isapprox(b2, 0.0)
+    is_ideal = is_ideal(sopt)
     
     @constraint(m, [i in ids], 
         var[:potential][sp[i]["fr_node"]] == 

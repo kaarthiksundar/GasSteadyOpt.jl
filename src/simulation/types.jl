@@ -22,6 +22,7 @@ get_potential(ss::SteadySimulator, pressure) = get_potential(ss.net, pressure)
 get_potential_derivative(ss::SteadySimulator, pressure) = get_potential_derivative(ss.net, pressure)
 
 is_pressure_node(ss::SteadySimulator, node_id, is_ideal) = is_pressure_node(ss.net, node_id, is_ideal)
+is_ideal(ss::SteadySimulator) = is_ideal(ss.net)
 
 initial_pipe_flow(ss::SteadySimulator, id::Int64) = ss.solution.state_guess[:pipe][id]["flow"] 
 initial_resistor_flow(ss::SteadySimulator, id::Int64) = ss.solution.state_guess[:resistor][id]["flow"] 
