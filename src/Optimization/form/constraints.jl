@@ -4,7 +4,6 @@ function _add_slack_node_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     var = opt_model.variables
     ids = ref(sopt, :slack_nodes)
     (isempty(ids)) && (return)
-    is_ideal = is_ideal(sopt)
     
     @constraint(m, [i in ids], 
         var[:potential][i] == 
@@ -12,7 +11,7 @@ function _add_slack_node_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     )
 
     @constraint(m, 
-        [i in ids; is_pressure_node(sopt, i, is_ideal) == true], 
+        [i in ids; is_pressure_node(sopt, i, is_ideal(sopt)) == true], 
         var[:pressure][i] == ref(sopt, :node, i, "slack_pressure")
     )
 end 
@@ -27,11 +26,10 @@ function _add_potential_pressure_map_constraints!(
     var = opt_model.variables
     ids = ref(sopt, :nodes)
     (isempty(ids)) && (return)
-    is_ideal = is_ideal(sopt)
 
     if nlp 
         for i in ids 
-            (is_pressure_node(sopt, i, is_ideal) == false) && (continue)
+            (is_pressure_node(sopt, i, is_ideal(sopt)) == false) && (continue)
             p = var[:pressure][i]
             potential = var[:potential][i]
             @NLconstraint(m, potential == (b1/2) * p^2 + (b2/3) * p^3 )
@@ -41,10 +39,10 @@ function _add_potential_pressure_map_constraints!(
     f = x -> (b1/2) * x^2 + (b2/3) * x^3
     fdash = x -> b1 * x + b2 * x^2
     for i in ids 
-        (is_pressure_node(sopt, i, is_ideal) == false) && (continue)
+        (is_pressure_node(sopt, i, is_ideal(sopt)) == false) && (continue)
         p_min = ref(sopt, :node, i, "min_pressure") 
         p_max = ref(sopt, :node, i, "min_pressure")
-        partition = [p_min, (p_min + p_max) * 0.5, p_max]
+        partition = [p_min, (range(p_min, p_max; length=10)[2:9] |> collect)..., p_max]
         PolyhedralRelaxations.construct_univariate_relaxation!(m, f, 
             var[:pressure][i], var[:potential][i], partition, false; f_dash = fdash)
     end 
@@ -111,7 +109,11 @@ function _add_pipe_constraints!(
                 if pipe[i]["min_flow"] >= 0.0 || pipe[i]["max_flow"] <= 0.0 
                     [pipe[i]["min_flow"], pipe[i]["max_flow"]]
                 else
-                    [pipe[i]["min_flow"], 0.0, pipe[i]["max_flow"]] 
+                    [pipe[i]["min_flow"], 
+                    (range(pipe[i]["min_flow"], 0.0; length=10)[2:9] |> collect)...,
+                    0.0, 
+                    (range(0.0, pipe[i]["max_flow"]; length=10)[2:9] |> collect)...,
+                    pipe[i]["max_flow"]] 
                 end 
             PolyhedralRelaxations.construct_univariate_relaxation!(m, f, 
                 var[:pipe_flow][i], var[:pipe_flow_lifted][i], partition, false; f_dash = fdash)
@@ -135,8 +137,7 @@ function _add_compressor_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     ids = keys(ref(sopt, :compressor))
     (isempty(ids)) && (return)
     compressor = ref(sopt, :compressor)
-    is_ideal = is_ideal(sopt)
-    if is_ideal
+    if is_ideal(sopt)
         for i in ids 
             flow = var[:compressor_flow][i]
             i_node = compressor[i]["fr_node"]
@@ -164,7 +165,7 @@ function _add_compressor_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
                 @constraints(m, begin 
                     x == x_ac + x_bp 
                     flow >= x_bp * compressor[i]["min_flow"]
-                    flow <= x * compressor[i]["max_flow"]
+                    flow <= x_ac * compressor[i]["max_flow"]
                     pi_j >= alpha_min * pi_i - (2 - x - x_ac) * (alpha_min * pi_i_max - pi_j_min)
                     pi_j <= alpha_max * pi_i + (2 - x - x_ac) * (pi_j_max - alpha_max * pi_i_min)
                     pi_i - pi_j >= (1 - x_bp) * (pi_i_min - pi_j_max)
@@ -200,7 +201,7 @@ function _add_compressor_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
                 @constraints(m, begin 
                     x == x_ac + x_bp 
                     flow >= x_bp * compressor[i]["min_flow"]
-                    flow <= x * compressor[i]["max_flow"]
+                    flow <= x_ac * compressor[i]["max_flow"]
                     p_j >= alpha_min * p_i - (2 - x - x_ac) * (alpha_min * p_i_max - p_j_min)
                     p_j <= alpha_max * p_i + (2 - x - x_ac) * (p_j_max - alpha_max * p_i_min)
                     p_i - p_j >= (1 - x_bp) * (p_i_min - p_j_max)
@@ -279,7 +280,7 @@ function _add_control_valve_constraints!(sopt::SteadyOptimizer, opt_model::OptMo
             @constraints(m, begin 
                 x == x_ac + x_bp 
                 flow >= x_bp * flow_min
-                flow <= x * flow_max
+                flow <= x_ac * flow_max
                 p_i - p_j >= (p_i_min - p_j_max) + x_ac * (delta_p_min - p_i_min + p_j_max)
                 p_i - p_j <= (p_i_max - p_j_min) - x_ac * (p_i_max - p_j_min - delta_p_max)
                 p_i - p_j >= (1 - x_bp) * (p_i_min - p_j_max)
@@ -296,7 +297,6 @@ function _add_short_pipe_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     ids = keys(ref(sopt, :short_pipe))
     (isempty(ids)) && (return)
     sp = ref(sopt, :short_pipe)
-    is_ideal = is_ideal(sopt)
     
     @constraint(m, [i in ids], 
         var[:potential][sp[i]["fr_node"]] == 
@@ -306,8 +306,8 @@ function _add_short_pipe_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     for i in ids 
         fr_node = sp[i]["fr_node"]
         to_node = sp[i]["to_node"]
-        fr_pressure_node = is_pressure_node(sopt, fr_node, is_ideal)
-        to_pressure_node = is_pressure_node(sopt, to_node, is_ideal)
+        fr_pressure_node = is_pressure_node(sopt, fr_node, is_ideal(sopt))
+        to_pressure_node = is_pressure_node(sopt, to_node, is_ideal(sopt))
 
         if fr_pressure_node && to_pressure_node 
             @constraint(m, var[:pressure][fr_node] == var[:pressure][to_node])
@@ -374,7 +374,12 @@ function _add_resistor_constraints!(
                 if resistor[i]["min_flow"] >= 0.0 || resistor[i]["max_flow"] <= 0.0 
                     [resistor[i]["min_flow"], resistor[i]["max_flow"]]
                 else
-                    [resistor[i]["min_flow"], 0.0, resistor[i]["max_flow"]] 
+
+                    [resistor[i]["min_flow"], 
+                    (range(resistor[i]["min_flow"], 0.0; length=10)[2:9] |> collect)...,
+                    0.0, 
+                    (range(0.0, resistor[i]["max_flow"]; length=10)[2:9] |> collect)...,
+                    resistor[i]["max_flow"]] 
                 end 
             PolyhedralRelaxations.construct_univariate_relaxation!(m, f, 
                 var[:resistor_flow][i], var[:resistor_flow_lifted][i], partition, false; f_dash = fdash)
@@ -551,7 +556,7 @@ function _add_constraints!(
     nlp::Bool=true, 
     misocp::Bool=false
 )
-    _add_slack_node_constraints!(sopt, opt_model)
+    # _add_slack_node_constraints!(sopt, opt_model)
     _add_potential_pressure_map_constraints!(sopt, opt_model; nlp=nlp)
     _add_pipe_constraints!(sopt, opt_model, nlp=nlp, misocp=misocp)
     _add_compressor_constraints!(sopt, opt_model)

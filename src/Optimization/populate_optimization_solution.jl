@@ -103,7 +103,10 @@ function populate_nodal_injection!(control, var, net)
            total_withdrawal += ref(net, :exit, id, "max_withdrawal")
         end 
         if ref(net, :node, i, "is_slack") 
-            control[:node][i]["pressure"] = ref(net, :node, i, "slack_pressure")
+            control[:node][i]["pressure"] = if is_pressure_node(net, i, is_ideal(net)) 
+                JuMP.value(var[:pressure][i]) else 
+                invert_positive_potential(net, JuMP.value(var[:potential][i]))
+            end 
         else 
             control[:node][i]["injection"] = total_injection - total_withdrawal
         end  
