@@ -29,12 +29,12 @@ function _eval_junction_equations!(ss::SteadySimulator, x_dof::AbstractArray, re
         eqn_no = junction["dof"]
         ctrl_type, val = control(ss, :node, id) # val is injection or pressure
 
-        if ctrl_type == pressure_control
+        if ctrl_type == ControlType(3)
             coeff = (is_pressure_node(ss, id, is_ideal(ss))) ? val : get_potential(ss, val)
             residual_dof[eqn_no] = x_dof[eqn_no] - coeff
         end
 
-        if  ctrl_type == flow_control
+        if  ctrl_type == ControlType(2)
             r = val # inflow is positive convention
             out_edge = ref(ss, :outgoing_dofs, id)
             in_edge = ref(ss, :incoming_dofs, id)
@@ -173,12 +173,12 @@ function _eval_junction_equations_mat!(ss::SteadySimulator, x_dof::AbstractArray
         eqn_no = junction["dof"]
         ctrl_type, _ = control(ss, :node, id) # val is injection or pressure
         
-        if ctrl_type == pressure_control
+        if ctrl_type == ControlType(3)
             J[eqn_no, eqn_no] = 1
             continue
         end
 
-        if  ctrl_type == flow_control
+        if  ctrl_type == ControlType(2)
             out_edge = ref(ss, :outgoing_dofs, id)
             in_edge = ref(ss, :incoming_dofs, id)
             for e in out_edge
@@ -309,7 +309,7 @@ function _eval_short_pipe_equations_mat!(ss::SteadySimulator, x_dof::AbstractArr
         eqn_fr = ref(ss, :node, fr_node, "dof")
         eqn_to = ref(ss, :node, to_node, "dof")
         is_fr_pressure_node = is_pressure_node(ss, fr_node, is_ideal(ss))
-        is_to_pressure_node = is_pressire_node(ss, to_node, is_ideal(ss))
+        is_to_pressure_node = is_pressure_node(ss, to_node, is_ideal(ss))
         
         resistance = 1e-7
 

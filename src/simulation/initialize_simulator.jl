@@ -1,6 +1,6 @@
 function initialize_simulator(net::NetworkData, solution::Solution)::SteadySimulator 
 
-    ref = _build_ref(net, solution, ref_extensions= [
+    ref = _build_ref!(net, solution, ref_extensions= [
         DataProcessing._add_pipe_info_at_nodes!,
         DataProcessing._add_compressor_info_at_nodes!,
         DataProcessing._add_control_valve_info_at_nodes!,

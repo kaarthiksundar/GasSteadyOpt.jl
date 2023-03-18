@@ -59,8 +59,8 @@ function _add_components_to_ref!(ref::Dict{Symbol,Any}, data::Dict{String,Any}, 
         name = :control_valve
         (!haskey(ref, name)) && (ref[name] = Dict())
         id = parse(Int64, i)
-        ref[name][id] = Dict()
         (control[:control_valve][id]["status"] == 0) && (continue)
+        ref[name][id] = Dict()
         @assert id == control_valve["id"]
         ref[name][id]["id"] = id
         ref[name][id]["fr_node"] = control_valve["fr_node"]
@@ -240,7 +240,7 @@ function _add_incident_dofs_info_at_nodes!(ref::Dict{Symbol,Any}, data::Dict{Str
     return
 end
 
-function build_ref(net::NetworkData, solution::Solution;
+function _build_ref!(net::NetworkData, solution::Solution;
     ref_extensions=[])::Dict{Symbol,Any}
 
     ref = Dict{Symbol,Any}()

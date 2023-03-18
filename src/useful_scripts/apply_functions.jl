@@ -22,6 +22,13 @@ function strengthen_flow_bounds!(data::Dict)
     end 
 end 
 
+function upper_bound_c_ratios!(data::Dict)
+    for (i, compressor) in get(data, "compressors", [])
+        data["compressors"][i]["max_c_ratio"] = min(
+            data["compressors"][i]["max_c_ratio"], 2.0)
+    end 
+end 
+
 function modify_entry_nominations!(data::Dict)
     for (i, nomination) in get(data, "entry_nominations", [])
         if (nomination["max_injection"] > 0.0)
@@ -36,7 +43,7 @@ function modify_entry_nominations!(data::Dict)
     c = 1.0
     d = 5.0 
 
-    f(t) = c + (d - c)/(b - a) * (t - a)
+    f(t) = (b != a) ? c + (d - c)/(b - a) * (t - a) : c
     (isempty(non_zero_injectors)) && (return)
     for (i, _) in non_zero_injectors
         data["entry_nominations"][i]["cost"] = f(data["entry_nominations"][i]["max_injection"])

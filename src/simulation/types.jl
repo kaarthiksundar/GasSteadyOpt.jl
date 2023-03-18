@@ -39,7 +39,7 @@ function control(ss::SteadySimulator,
     (key == :compressor) && (return get_compressor_control(ss, id))
     (key == :control_valve) && (return get_control_valve_control(ss, id))
     @error "control available only for nodes, compressors, and control_valves"
-    return ControlType::unknown_control, NaN
+    return ControlType(100), NaN
 end
 
 is_compressor_off(ss::SteadySimulator, id::Int64)::Bool = ss.solution.control[:compressor][id]["status"] == 0
@@ -50,21 +50,21 @@ function get_nodal_control(ss::SteadySimulator,
     id::Int64)::Tuple{ControlType,Float64}
     injection = ss.solution.control[:node][id]["injection"]
     pressure = ss.solution.control[:node][id]["pressure"]
-    (isnan(injection) && isnan(pressure)) && (return ControlType::flow_control, 0.0)
-    (isnan(injection)) && (return ControlType::pressure_control, pressure)
-    return ControlType::flow_control, injection 
+    (isnan(injection) && isnan(pressure)) && (return ControlType(2), 0.0)
+    (isnan(injection)) && (return ControlType(3), pressure)
+    return ControlType(2), injection 
 end
 
 function get_compressor_control(ss::SteadySimulator,
     id::Int64)::Tuple{ControlType,Float64}
     ratio = ss.solution.control[:compressor][id]["ratio"]
-    return ControlType::pressure_ratio_control, ratio
+    return ControlType(0), ratio
 end
 
 function get_control_valve_control(ss::SteadySimulator,
     id::Int64)::Tuple{ControlType,Float64}
     differential = ss.solution.control[:control_valve][id]["differential"]
-    return ControlType::pressure_differential_control, differential
+    return ControlType(1), differential
 end
 
 @enum SolverStatus begin 

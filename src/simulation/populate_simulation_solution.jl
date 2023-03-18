@@ -1,7 +1,4 @@
-find_ub(ss::SteadySimulator, val::Float64, ub::Float64)= find_ub(ss.net, val, ub)
-find_lb(ss::SteadySimulator, val::Float64, lb::Float64) = find_lb(ss.net, val, lb)
-bisect(ss::SteadySimulator, lb::Float64, ub::Float64, val::Float64) = bisect(ss.net, lb, ub, val) 
-invert_positive_potential(ss::SteadySimulator, val::Float64) = bisect(ss, 0.0, find_ub(ss, val, 1.0), val)
+invert_positive_potential(ss::SteadySimulator, val::Float64) = invert_positive_potential(ss.net, val)
 
 function calculate_slack_withdrawal(ss::SteadySimulator, id::Int, x_dof::Array)::Float64
     slack_withdrawal = 0.0
@@ -26,13 +23,13 @@ function update_solution_fields_in_ref!(ss::SteadySimulator, x_dof::Array)::Name
         if sym == :node
             
             ctrl_type, val = control(ss, :node, local_id)
-            if ctrl_type == flow_control
+            if ctrl_type == ControlType(2)
                 ref(ss, sym, local_id)["withdrawal"] = val
-            elseif ctrl_type == pressure_control 
+            elseif ctrl_type == ControlType(3)
                 ref(ss, sym, local_id)["withdrawal"] = calculate_slack_withdrawal(ss, local_id, x_dof)
             end 
 
-            pi_val = (ref(ss, :is_pressure_node, local_id)) ? get_potential(ss, x_dof[i]) : x_dof[i] 
+            pi_val = (is_pressure_node(ss, local_id, is_ideal(ss))) ? get_potential(ss, x_dof[i]) : x_dof[i] 
             if (pi_val < 0)
                 push!(negative_nodal_potentials, local_id)
                 ref(ss, sym, local_id)["potential"] = pi_val 
@@ -48,7 +45,7 @@ function update_solution_fields_in_ref!(ss::SteadySimulator, x_dof::Array)::Name
                 continue
             end 
 
-            p_val = (ref(ss, :is_pressure_node, local_id)) ? x_dof[i] : invert_positive_potential(ss, x_dof[i])
+            p_val = (is_pressure_node(ss, local_id, is_ideal(ss))) ? x_dof[i] : invert_positive_potential(ss, x_dof[i])
 
             # pi_val > 0 is always true when we get to this point 
             if (p_val < 0 && pi_val > 0)
@@ -106,81 +103,69 @@ function update_solution_fields_in_ref!(ss::SteadySimulator, x_dof::Array)::Name
 end
 
 
-# function populate_solution!(ss::SteadySimulator)
-#     sol = ss.sol
-#     units = params(ss, :units)
-#     bc = ss.boundary_conditions
+function populate_solution!(ss::SteadySimulator)
+    sol = ss.solution 
 
-#     function pressure_convertor(pu) 
-#         (units == 0) && (return pu * nominal_values(ss, :pressure)) 
-#         return pascal_to_psi(pu * nominal_values(ss, :pressure))
-#     end 
+    function pressure_convertor(pu) 
+        (units == 0) && (return pu * nominal_values(ss, :pressure)) 
+        return pascal_to_psi(pu * nominal_values(ss, :pressure))
+    end 
 
-#     function mass_flow_convertor(pu)
-#         kgps_to_mmscfd = get_kgps_to_mmscfd_conversion_factor(params(ss))
-#         (units == 0) && (return pu * nominal_values(ss, :mass_flow)) 
-#         return pu * nominal_values(ss, :mass_flow) * kgps_to_mmscfd
-#     end 
+    function mass_flow_convertor(pu)
+        kgps_to_mmscfd = get_kgps_to_mmscfd_conversion_factor(params(ss))
+        (units == 0) && (return pu * nominal_values(ss, :mass_flow)) 
+        return pu * nominal_values(ss, :mass_flow) * kgps_to_mmscfd
+    end 
 
-#     function density_convertor(pu)
-#         return pu * nominal_values(ss, :density)
-#     end 
+    function density_convertor(pu)
+        return pu * nominal_values(ss, :density)
+    end 
     
-#     for i in collect(keys(ref(ss, :node)))     
-#         sol["nodal_density"][i] = density_convertor(get_density(ss, ref(ss, :node, i, "pressure")))
-#         sol["nodal_pressure"][i] = pressure_convertor(ref(ss, :node, i, "pressure"))
-#     end
+    for i in collect(keys(ref(ss, :node)))     
+        sol.state[:node][i]["pressure"] =ref(ss, :node, i, "pressure")
+        sol.state[:node][i]["potential"] =ref(ss, :node, i, "potential")
+    end
 
-#     for i in collect(keys(ref(ss, :pipe)))
-#         sol["pipe_flow"][i] = mass_flow_convertor(ref(ss, :pipe, i, "flow"))
-#     end
+    for i in collect(keys(ref(ss, :pipe)))
+        sol.state[:pipe][i]["flow"] = ref(ss, :pipe, i, "flow")
+    end
     
-#     if haskey(ref(ss), :compressor)
-#         for i in collect(keys(ref(ss, :compressor)))
-#             sol["compressor_flow"][i] = mass_flow_convertor(ref(ss, :compressor, i, "flow"))
-#         end
-#     end
+    if haskey(ref(ss), :compressor)
+        for i in collect(keys(ref(ss, :compressor)))
+            sol.state[:compressor][i]["flow"] = ref(ss, :compressor, i, "flow")
+        end
+    end
 
-#     if haskey(ref(ss), :control_valve)
-#         for i in collect(keys(ref(ss, :control_valve)))
-#             sol["control_valve_flow"][i] = mass_flow_convertor(ref(ss, :control_valve, i, "flow"))
-#         end 
-#     end 
+    if haskey(ref(ss), :control_valve)
+        for i in collect(keys(ref(ss, :control_valve)))
+            sol.state[:control_valve][i]["flow"] = ref(ss, :control_valve, i, "flow")
+        end 
+    end 
 
-#     if haskey(ref(ss), :control_valve)
-#         for i in bc[:control_valve_status][:off]
-#             sol["control_valve_flow"][i] = 0.0
-#         end 
-#     end
 
-#     if haskey(ref(ss), :valve)
-#         for i in collect(keys(ref(ss, :valve)))
-#             sol["valve_flow"][i] = mass_flow_convertor(ref(ss, :valve, i, "flow"))
-#         end 
-#     end 
+    if haskey(ref(ss), :valve)
+        for i in collect(keys(ref(ss, :valve)))
+            sol.state[:valve][i]["flow"] = ref(ss, :valve, i, "flow")
+        end 
+    end 
 
-#     if haskey(ref(ss), :valve)
-#         for i in bc[:valve_status][:off]
-#             sol["valve_flow"][i] = 0.0
-#         end 
-#     end
 
-#     if haskey(ref(ss), :resistor)
-#         for i in collect(keys(ref(ss, :resistor)))
-#             sol["resistor_flow"][i] = mass_flow_convertor(ref(ss, :resistor, i, "flow"))
-#         end 
-#     end 
+    if haskey(ref(ss), :resistor)
+        for i in collect(keys(ref(ss, :resistor)))
+            sol.state[:resistor][i]["flow"] = ref(ss, :resistor, i, "flow")
+        end 
+    end 
 
-#     if haskey(ref(ss), :loss_resistor)
-#         for i in collect(keys(ref(ss, :loss_resistor)))
-#             sol["resistor_flow"][i] = mass_flow_convertor(ref(ss, :loss_resistor, i, "flow"))
-#         end 
-#     end 
+    if haskey(ref(ss), :loss_resistor)
+        for i in collect(keys(ref(ss, :loss_resistor)))
+            sol.state[:loss_resistor][i]["flow"] = ref(ss, :loss_resistor, i, "flow")
+        end 
+    end 
 
-#     if haskey(ref(ss), :short_pipe)
-#         for i in collect(keys(ref(ss, :short_pipe)))
-#             sol["short_pipe_flow"][i] = mass_flow_convertor(ref(ss, :short_pipe, i, "flow"))
-#         end 
-#     end 
-#     return
-# end 
+    if haskey(ref(ss), :short_pipe)
+        for i in collect(keys(ref(ss, :short_pipe)))
+            sol.state[:short_pipe][i]["flow"] = ref(ss, :short_pipe, i, "flow")
+        end 
+    end 
+    return
+end 

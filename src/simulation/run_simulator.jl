@@ -1,6 +1,7 @@
 function run_simulator!(ss::SteadySimulator; 
     method::Symbol=:newton,
     iteration_limit::Int64=2000, 
+    show_trace::Bool = false,
     kwargs...)::SolverReturn
     
     x_guess = _create_initial_guess_dof!(ss)
@@ -12,7 +13,7 @@ function run_simulator!(ss::SteadySimulator;
     assemble_mat!(ss, rand(n), J0)
     df = OnceDifferentiable(residual_fun!, Jacobian_fun!, rand(n), rand(n), J0)
 
-    time = @elapsed soln = nlsolve(df, x_guess; method = method, iterations = iteration_limit, kwargs...)
+    time = @elapsed soln = nlsolve(df, x_guess; method = method, show_trace = show_trace, iterations = iteration_limit, kwargs...)
 
     convergence_state = converged(soln)
 

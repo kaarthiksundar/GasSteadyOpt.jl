@@ -23,7 +23,7 @@ function _create_initial_guess_dof!(ss::SteadySimulator)::Array
     components = [:pipe, :resistor, :loss_resistor, :short_pipe, :compressor, :control_valve, :valve]
 
     for component in components
-        for (i, val) in ref(ss, component)
+        for (i, val) in get(ref(ss), component, Dict())
             (isnan(state_guess[component][i]["flow"])) && (continue)
             dof = val["dof"]
             x_guess[dof] = state_guess[component][i]["flow"]
