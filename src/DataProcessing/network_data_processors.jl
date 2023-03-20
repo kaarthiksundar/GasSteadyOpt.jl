@@ -2,6 +2,7 @@ function _get_nominal_pressure(data::Dict{String,Any}, units)
     if isnan(data["slack_pressure"])
         p = data["nodes"][data["slack_node"]]["max_pressure"] 
     end 
+    data["slack_pressure"] = p
     (units == 1) && (return p *  6894.75729)
     return p
 end 

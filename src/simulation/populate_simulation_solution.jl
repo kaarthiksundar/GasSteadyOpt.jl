@@ -169,3 +169,31 @@ function populate_solution!(ss::SteadySimulator)
     end 
     return
 end 
+
+function is_solution_feasible!(ss::SteadySimulator)
+    net = ss.net 
+    sol = ss.solution
+    min_pressure_bound = []
+    max_pressure_bound = []
+    for i in collect(keys(ref(ss, :node)))  
+        p = sol.state[:node][i]["pressure"]
+        p_min = ref(net, :node, i, "min_pressure")
+        p_max = ref(net, :node, i, "max_pressure")
+        (p > p_max) && (push!(max_pressure_bound, i))
+        (p < p_min) && (push!(min_pressure_bound, i))
+    end 
+    return isempty(max_pressure_bound) || isempty(min_pressure_bound), min_pressure_bound, max_pressure_bound
+end 
+
+function is_solution_feasible!(net::NetworkData, sol::Solution)
+    min_pressure_bound = []
+    max_pressure_bound = []
+    for i in collect(keys(ref(net, :node)))  
+        p = sol.state[:node][i]["pressure"]
+        p_min = ref(net, :node, i, "min_pressure")
+        p_max = ref(net, :node, i, "max_pressure")
+        (p > p_max) && (push!(max_pressure_bound, i))
+        (p < p_min) && (push!(min_pressure_bound, i))
+    end 
+    return isempty(max_pressure_bound) || isempty(min_pressure_bound), min_pressure_bound, max_pressure_bound
+end 

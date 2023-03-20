@@ -54,8 +54,10 @@ function is_pressure_node(net::NetworkData, node_id, is_ideal)
     ids = union(
             Set(ref(net, :control_valve_nodes)), 
             Set(ref(net, :loss_resistor_nodes)),
-            Set(ref(net, :valve_nodes))
+            Set(ref(net, :valve_nodes)), 
+            Set(ref(net, :compressor_nodes))
         ) 
+    return node_id in ids
     if (is_ideal)
         return node_id in ids
     else 
