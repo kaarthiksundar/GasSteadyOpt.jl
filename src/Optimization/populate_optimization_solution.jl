@@ -138,7 +138,7 @@ function populate_compressor_control_valve_status!(control, var, net)
             (control[comp][i]["status"] == 0) && (continue)
             fr_node = ref(net, comp, i, "fr_node")
             to_node = ref(net, comp, i, "to_node")
-            _, b2 = get_eos_coeffs(sopt)
+            _, b2 = get_eos_coeffs(net)
             is_ideal = isapprox(b2, 0.0)
             if comp == :compressor 
                 if is_ideal 
