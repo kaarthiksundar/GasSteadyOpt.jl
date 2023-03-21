@@ -10,9 +10,12 @@ slack_pressure_data = compute_slack_pressure(zip_file, nomination_case)
 @info "slack pressure computation ended"
 slack_pressure = slack_pressure_data.slack_pressure 
 net_ideal = slack_pressure_data.net 
+# test run to get rid of precompiling run time
+run_ogf(net_ideal) 
+# actual run 
 gaslib_40_ogf_ideal = run_ogf(net_ideal)
 pretty_table(gaslib_40_ogf_ideal.stats, title = "GasLib-40 ideal run stats")
-p = slack_pressure * nominal_values(net, :pressure)
+p = slack_pressure * nominal_values(net_ideal, :pressure)
 
 # simple cnga run
 net_simple_cnga = create_network(zip_file, nomination_case, 
