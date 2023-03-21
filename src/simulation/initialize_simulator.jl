@@ -8,6 +8,7 @@ function initialize_simulator(net::NetworkData, solution::Solution)::SteadySimul
         DataProcessing._add_resistor_info_at_nodes!,
         DataProcessing._add_loss_resistor_info_at_nodes!,
         DataProcessing._add_short_pipe_info_at_nodes!,
+        DataProcessing._add_pressure_node_labels!,
         _add_index_info!,
         _add_incident_dofs_info_at_nodes!
         ]

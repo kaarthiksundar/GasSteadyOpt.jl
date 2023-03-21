@@ -103,7 +103,7 @@ function populate_nodal_injection!(control, var, net)
            total_withdrawal += ref(net, :exit, id, "max_withdrawal")
         end 
         if ref(net, :node, i, "is_slack") 
-            control[:node][i]["pressure"] = if is_pressure_node(net, i, is_ideal(net)) 
+            control[:node][i]["pressure"] = if is_pressure_node(net, i) 
                 JuMP.value(var[:pressure][i]) else 
                 invert_positive_potential(net, JuMP.value(var[:potential][i]))
             end 
@@ -138,18 +138,10 @@ function populate_compressor_control_valve_status!(control, var, net)
             (control[comp][i]["status"] == 0) && (continue)
             fr_node = ref(net, comp, i, "fr_node")
             to_node = ref(net, comp, i, "to_node")
-            _, b2 = get_eos_coeffs(net)
-            is_ideal = isapprox(b2, 0.0)
             if comp == :compressor 
-                if is_ideal 
-                    pi_fr = JuMP.value(var[:potential][fr_node])
-                    pi_to = JuMP.value(var[:potential][to_node])
-                    control[comp][i]["ratio"] = sqrt(pi_to/pi_fr)
-                else 
-                    p_fr = JuMP.value(var[:pressure][fr_node])
-                    p_to = JuMP.value(var[:pressure][to_node])
-                    control[comp][i]["ratio"] = p_to/p_fr
-                end 
+                p_fr = JuMP.value(var[:pressure][fr_node])
+                p_to = JuMP.value(var[:pressure][to_node])
+                control[comp][i]["ratio"] = p_to/p_fr
             else 
                 p_fr = JuMP.value(var[:pressure][fr_node])
                 p_to = JuMP.value(var[:pressure][to_node])

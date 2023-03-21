@@ -4,12 +4,9 @@ function _create_initial_guess_dof!(ss::SteadySimulator)::Array
     dofs_updated = 0
     state_guess = ss.solution.state_guess
 
-    _, b2 = get_eos_coeffs(ss)
-    is_ideal = isapprox(b2, 0.0)
-
     for (i, guess) in state_guess[:node]
         dof = ref(ss, :node, i, "dof")
-        if is_pressure_node(ss, i, is_ideal) 
+        if is_pressure_node(ss, i) 
             (isnan(guess["pressure"])) && (continue)
             x_guess[dof] = guess["pressure"]
             dofs_updated += 1 

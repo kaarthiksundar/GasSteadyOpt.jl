@@ -5,13 +5,14 @@ function _add_slack_node_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     ids = ref(sopt, :slack_nodes)
     (isempty(ids)) && (return)
     
-    @constraint(m, [i in ids], 
+    @constraint(m, [i in ids; !isnan(ref(sopt, :node, i, "slack_pressure"))], 
         var[:potential][i] == 
         get_potential(sopt, ref(sopt, :node, i, "slack_pressure"))
     )
 
     @constraint(m, 
-        [i in ids; is_pressure_node(sopt, i, is_ideal(sopt)) == true], 
+        [i in ids; is_pressure_node(sopt, i) == true && 
+            !isnan(ref(sopt, :node, i, "slack_pressure"))], 
         var[:pressure][i] == ref(sopt, :node, i, "slack_pressure")
     )
 end 
@@ -24,13 +25,13 @@ function _add_potential_pressure_map_constraints!(
 )
     m = opt_model.model 
     var = opt_model.variables
-    ids = ref(sopt, :node)
+    ids = ref(sopt, :node) |> keys
     (isempty(ids)) && (return)
     b1, b2 = get_eos_coeffs(sopt)
 
     if nlp 
         for i in ids 
-            (is_pressure_node(sopt, i, is_ideal(sopt)) == false) && (continue)
+            (is_pressure_node(sopt, i) == false) && (continue)
             p = var[:pressure][i]
             potential = var[:potential][i]
             @NLconstraint(m, potential == (b1/2) * p^2 + (b2/3) * p^3 )
@@ -40,10 +41,11 @@ function _add_potential_pressure_map_constraints!(
     f = x -> (b1/2) * x^2 + (b2/3) * x^3
     fdash = x -> b1 * x + b2 * x^2
     for i in ids 
-        (is_pressure_node(sopt, i, is_ideal(sopt)) == false) && (continue)
+        (is_pressure_node(sopt, i) == false) && (continue)
+        (i in ref(sopt, :slack_nodes) && !isnan(ref(sopt, :node, i, "slack_pressure"))) && (continue)
         p_min = ref(sopt, :node, i, "min_pressure") 
-        p_max = ref(sopt, :node, i, "min_pressure")
-        partition = [p_min, (range(p_min, p_max; length=10)[2:9] |> collect)..., p_max]
+        p_max = ref(sopt, :node, i, "max_pressure")
+        partition = [p_min, p_max]
         PolyhedralRelaxations.construct_univariate_relaxation!(m, f, 
             var[:pressure][i], var[:potential][i], partition, false; f_dash = fdash)
     end 
@@ -138,77 +140,39 @@ function _add_compressor_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     ids = keys(ref(sopt, :compressor))
     (isempty(ids)) && (return)
     compressor = ref(sopt, :compressor)
-    if 1 == 2
-        for i in ids 
-            flow = var[:compressor_flow][i]
-            i_node = compressor[i]["fr_node"]
-            j_node = compressor[i]["to_node"] 
-            pi_i = var[:potential][i_node]
-            pi_i_min = get_potential(sopt, ref(sopt, :node, i_node, "min_pressure"))
-            pi_i_max = get_potential(sopt, ref(sopt, :node, i_node, "max_pressure"))
-            pi_j = var[:potential][j_node]
-            pi_j_min = get_potential(sopt, ref(sopt, :node, j_node, "min_pressure"))
-            pi_j_max = get_potential(sopt, ref(sopt, :node, j_node, "max_pressure"))
-            alpha_min = compressor[i]["min_c_ratio"]^2
-            alpha_max = compressor[i]["max_c_ratio"]^2
-            x = var[:compressor_status][i]
-            internal_bypass_required = compressor[i]["internal_bypass_required"] == true
-            if !internal_bypass_required
-                @constraints(m, begin 
-                    flow >= x * compressor[i]["min_flow"]
-                    flow <= x * compressor[i]["max_flow"]
-                    pi_j >= alpha_min * pi_i - (1 - x) * (alpha_min * pi_i_max - pi_j_min)
-                    pi_j <= alpha_max * pi_i + (1 - x) * (pi_j_max - alpha_max * pi_i_min)
-                end)
-            else 
-                x_ac = var[:compressor_active][i]
-                x_bp = var[:compressor_bypass][i]
-                @constraints(m, begin 
-                    x == x_ac + x_bp 
-                    flow >= x_bp * compressor[i]["min_flow"]
-                    flow <= x_ac * compressor[i]["max_flow"]
-                    pi_j >= alpha_min * pi_i - (2 - x - x_ac) * (alpha_min * pi_i_max - pi_j_min)
-                    pi_j <= alpha_max * pi_i + (2 - x - x_ac) * (pi_j_max - alpha_max * pi_i_min)
-                    pi_i - pi_j >= (1 - x_bp) * (pi_i_min - pi_j_max)
-                    pi_i - pi_j <= (1 - x_bp) * (pi_i_max - pi_j_min)
-                end)
-            end 
-        end 
-    else 
-        for i in ids 
-            flow = var[:compressor_flow][i]
-            i_node = compressor[i]["fr_node"]
-            j_node = compressor[i]["to_node"] 
-            p_i = var[:pressure][i_node]
-            p_i_min = ref(sopt, :node, i_node, "min_pressure")
-            p_i_max = ref(sopt, :node, i_node, "max_pressure")
-            p_j = var[:pressure][j_node]
-            p_j_min = ref(sopt, :node, j_node, "min_pressure")
-            p_j_max = ref(sopt, :node, j_node, "max_pressure")
-            alpha_min = compressor[i]["min_c_ratio"]
-            alpha_max = compressor[i]["max_c_ratio"]
-            x = var[:compressor_status][i]
-            internal_bypass_required = compressor[i]["internal_bypass_required"] == true
-            if !internal_bypass_required
-                @constraints(m, begin 
-                    flow <= x * compressor[i]["min_flow"]
-                    flow <= x * compressor[i]["max_flow"]
-                    p_j >= alpha_min * p_i - (1 - x) * (alpha_min * p_i_max - p_j_min)
-                    p_j <= alpha_max * p_i + (1 - x) * (p_j_max - alpha_max * p_i_min)
-                end)
-            else 
-                x_ac = var[:compressor_active][i]
-                x_bp = var[:compressor_bypass][i]
-                @constraints(m, begin 
-                    x == x_ac + x_bp 
-                    flow >= x_bp * compressor[i]["min_flow"]
-                    flow <= x_ac * compressor[i]["max_flow"]
-                    p_j >= alpha_min * p_i - (2 - x - x_ac) * (alpha_min * p_i_max - p_j_min)
-                    p_j <= alpha_max * p_i + (2 - x - x_ac) * (p_j_max - alpha_max * p_i_min)
-                    p_i - p_j >= (1 - x_bp) * (p_i_min - p_j_max)
-                    p_i - p_j <= (1 - x_bp) * (p_i_max - p_j_min)
-                end)
-            end 
+    for i in ids 
+        flow = var[:compressor_flow][i]
+        i_node = compressor[i]["fr_node"]
+        j_node = compressor[i]["to_node"] 
+        p_i = var[:pressure][i_node]
+        p_i_min = ref(sopt, :node, i_node, "min_pressure")
+        p_i_max = ref(sopt, :node, i_node, "max_pressure")
+        p_j = var[:pressure][j_node]
+        p_j_min = ref(sopt, :node, j_node, "min_pressure")
+        p_j_max = ref(sopt, :node, j_node, "max_pressure")
+        alpha_min = compressor[i]["min_c_ratio"]
+        alpha_max = compressor[i]["max_c_ratio"]
+        x = var[:compressor_status][i]
+        internal_bypass_required = compressor[i]["internal_bypass_required"] == true
+        if !internal_bypass_required
+            @constraints(m, begin 
+                flow <= x * compressor[i]["min_flow"]
+                flow <= x * compressor[i]["max_flow"]
+                p_j >= alpha_min * p_i - (1 - x) * (alpha_min * p_i_max - p_j_min)
+                p_j <= alpha_max * p_i + (1 - x) * (p_j_max - alpha_max * p_i_min)
+            end)
+        else 
+            x_ac = var[:compressor_active][i]
+            x_bp = var[:compressor_bypass][i]
+            @constraints(m, begin 
+                x == x_ac + x_bp 
+                flow >= x_bp * compressor[i]["min_flow"]
+                flow <= x_ac * compressor[i]["max_flow"]
+                p_j >= alpha_min * p_i - (2 - x - x_ac) * (alpha_min * p_i_max - p_j_min)
+                p_j <= alpha_max * p_i + (2 - x - x_ac) * (p_j_max - alpha_max * p_i_min)
+                p_i - p_j >= (1 - x_bp) * (p_i_min - p_j_max)
+                p_i - p_j <= (1 - x_bp) * (p_i_max - p_j_min)
+            end)
         end 
     end 
 end 
@@ -307,8 +271,8 @@ function _add_short_pipe_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
     for i in ids 
         fr_node = sp[i]["fr_node"]
         to_node = sp[i]["to_node"]
-        fr_pressure_node = is_pressure_node(sopt, fr_node, is_ideal(sopt))
-        to_pressure_node = is_pressure_node(sopt, to_node, is_ideal(sopt))
+        fr_pressure_node = is_pressure_node(sopt, fr_node)
+        to_pressure_node = is_pressure_node(sopt, to_node)
 
         if fr_pressure_node && to_pressure_node 
             @constraint(m, var[:pressure][fr_node] == var[:pressure][to_node])

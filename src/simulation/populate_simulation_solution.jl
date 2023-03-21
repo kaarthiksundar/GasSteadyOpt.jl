@@ -29,7 +29,7 @@ function update_solution_fields_in_ref!(ss::SteadySimulator, x_dof::Array)::Name
                 ref(ss, sym, local_id)["withdrawal"] = calculate_slack_withdrawal(ss, local_id, x_dof)
             end 
 
-            pi_val = (is_pressure_node(ss, local_id, is_ideal(ss))) ? get_potential(ss, x_dof[i]) : x_dof[i] 
+            pi_val = (is_pressure_node(ss, local_id)) ? get_potential(ss, x_dof[i]) : x_dof[i] 
             if (pi_val < 0)
                 push!(negative_nodal_potentials, local_id)
                 ref(ss, sym, local_id)["potential"] = pi_val 
@@ -45,7 +45,7 @@ function update_solution_fields_in_ref!(ss::SteadySimulator, x_dof::Array)::Name
                 continue
             end 
 
-            p_val = (is_pressure_node(ss, local_id, is_ideal(ss))) ? x_dof[i] : invert_positive_potential(ss, x_dof[i])
+            p_val = (is_pressure_node(ss, local_id)) ? x_dof[i] : invert_positive_potential(ss, x_dof[i])
 
             # pi_val > 0 is always true when we get to this point 
             if (p_val < 0 && pi_val > 0)
@@ -182,7 +182,7 @@ function is_solution_feasible!(ss::SteadySimulator)
         (p > p_max) && (push!(max_pressure_bound, i))
         (p < p_min) && (push!(min_pressure_bound, i))
     end 
-    return isempty(max_pressure_bound) || isempty(min_pressure_bound), min_pressure_bound, max_pressure_bound
+    return isempty(max_pressure_bound) && isempty(min_pressure_bound), min_pressure_bound, max_pressure_bound
 end 
 
 function is_solution_feasible!(net::NetworkData, sol::Solution)
@@ -195,5 +195,5 @@ function is_solution_feasible!(net::NetworkData, sol::Solution)
         (p > p_max) && (push!(max_pressure_bound, i))
         (p < p_min) && (push!(min_pressure_bound, i))
     end 
-    return isempty(max_pressure_bound) || isempty(min_pressure_bound), min_pressure_bound, max_pressure_bound
+    return isempty(max_pressure_bound) && isempty(min_pressure_bound), min_pressure_bound, max_pressure_bound
 end 

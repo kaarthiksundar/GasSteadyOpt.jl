@@ -30,7 +30,7 @@ function _eval_junction_equations!(ss::SteadySimulator, x_dof::AbstractArray, re
         ctrl_type, val = control(ss, :node, id) # val is injection or pressure
 
         if ctrl_type == ControlType(3)
-            coeff = (is_pressure_node(ss, id, is_ideal(ss))) ? val : get_potential(ss, val)
+            coeff = (is_pressure_node(ss, id)) ? val : get_potential(ss, val)
             residual_dof[eqn_no] = x_dof[eqn_no] - coeff
         end
 
@@ -54,8 +54,8 @@ function _eval_pipe_equations!(ss::SteadySimulator, x_dof::AbstractArray, residu
         to_node = pipe["to_node"]
         fr_dof = ref(ss, :node, fr_node, "dof")
         to_dof = ref(ss, :node, to_node, "dof")
-        is_fr_pressure_node = is_pressure_node(ss, fr_node, is_ideal(ss))
-        is_to_pressure_node = is_pressure_node(ss, to_node, is_ideal(ss))
+        is_fr_pressure_node = is_pressure_node(ss, fr_node)
+        is_to_pressure_node = is_pressure_node(ss, to_node)
         pi_fr = (is_fr_pressure_node) ? get_potential(ss, x_dof[fr_dof]) : x_dof[fr_dof] 
         pi_to = (is_to_pressure_node) ? get_potential(ss, x_dof[to_dof]) : x_dof[to_dof] 
         c = nominal_values(ss, :mach_num)^2 / nominal_values(ss, :euler_num) 
@@ -75,8 +75,8 @@ function _eval_resistor_equations!(ss::SteadySimulator, x_dof::AbstractArray, re
         to_node = resistor["to_node"]
         fr_dof = ref(ss, :node, fr_node, "dof")
         to_dof = ref(ss, :node, to_node, "dof")
-        is_fr_pressure_node = is_pressure_node(ss, fr_node, is_ideal(ss))
-        is_to_pressure_node = is_pressure_node(ss, to_node, is_ideal(ss))
+        is_fr_pressure_node = is_pressure_node(ss, fr_node)
+        is_to_pressure_node = is_pressure_node(ss, to_node)
         pi_fr = (is_fr_pressure_node) ? get_potential(ss, x_dof[fr_dof]) : x_dof[fr_dof] 
         pi_to = (is_to_pressure_node) ? get_potential(ss, x_dof[to_dof]) : x_dof[to_dof] 
         c = nominal_values(ss, :mach_num)^2 / nominal_values(ss, :euler_num) 
@@ -108,7 +108,7 @@ function _eval_compressor_equations!(ss::SteadySimulator, x_dof::AbstractArray, 
         _, cmpr_val = control(ss, :compressor, id)
         to_node = comp["to_node"]
         fr_node = comp["fr_node"]
-        is_pressure_eq = is_pressure_node(ss, fr_node, is_ideal(ss)) || is_pressure_node(ss, to_node, is_ideal(ss))
+        is_pressure_eq = is_pressure_node(ss, fr_node) || is_pressure_node(ss, to_node)
         val = (is_pressure_eq) ? cmpr_val : cmpr_val^2
         residual_dof[eqn_no] = val * x_dof[ref(ss, :node, fr_node, "dof")] -  x_dof[ref(ss, :node, to_node, "dof")]
     end
@@ -135,8 +135,8 @@ function _eval_short_pipe_equations!(ss::SteadySimulator, x_dof::AbstractArray, 
         to_node = pipe["to_node"]
         fr_dof = ref(ss, :node, fr_node, "dof")
         to_dof = ref(ss, :node, to_node, "dof")
-        is_fr_pressure_node = is_pressure_node(ss, fr_node, is_ideal(ss))
-        is_to_pressure_node = is_pressure_node(ss, to_node, is_ideal(ss))
+        is_fr_pressure_node = is_pressure_node(ss, fr_node)
+        is_to_pressure_node = is_pressure_node(ss, to_node)
         pi_fr = (is_fr_pressure_node) ? get_potential(ss, x_dof[fr_dof]) : x_dof[fr_dof] 
         pi_to = (is_to_pressure_node) ? get_potential(ss, x_dof[to_dof]) : x_dof[to_dof]  
 
@@ -154,8 +154,8 @@ function _eval_valve_equations!(ss::SteadySimulator, x_dof::AbstractArray, resid
         to_node = valve["to_node"]
         fr_dof = ref(ss, :node, fr_node, "dof")
         to_dof = ref(ss, :node, to_node, "dof")
-        is_fr_pressure_node = is_pressure_node(ss, fr_node, is_ideal(ss))
-        is_to_pressure_node = is_pressure_node(ss, to_node, is_ideal(ss))
+        is_fr_pressure_node = is_pressure_node(ss, fr_node)
+        is_to_pressure_node = is_pressure_node(ss, to_node)
         if (is_fr_pressure_node && is_to_pressure_node)
             residual_dof[eqn_no] = x_dof[fr_dof] - x_dof[to_dof]
         else
@@ -202,8 +202,8 @@ function _eval_pipe_equations_mat!(ss::SteadySimulator, x_dof::AbstractArray,
 
         eqn_fr = ref(ss, :node, fr_node, "dof")
         eqn_to = ref(ss, :node, to_node, "dof")
-        is_fr_pressure_node = is_pressure_node(ss, fr_node, is_ideal(ss))
-        is_to_pressure_node = is_pressure_node(ss, to_node, is_ideal(ss))
+        is_fr_pressure_node = is_pressure_node(ss, fr_node)
+        is_to_pressure_node = is_pressure_node(ss, to_node)
         
         c = nominal_values(ss, :mach_num)^2 / nominal_values(ss, :euler_num) 
         resistance = pipe["friction_factor"] * pipe["length"] * c / (2 * pipe["diameter"] * pipe["area"]^2)
@@ -229,8 +229,8 @@ function _eval_resistor_equations_mat!(ss::SteadySimulator, x_dof::AbstractArray
 
         eqn_fr = ref(ss, :node, fr_node, "dof")
         eqn_to = ref(ss, :node, to_node, "dof")
-        is_fr_pressure_node = is_pressure_node(ss, fr_node, is_ideal(ss))
-        is_to_pressure_node = is_pressure_node(ss, to_node, is_ideal(ss))
+        is_fr_pressure_node = is_pressure_node(ss, fr_node)
+        is_to_pressure_node = is_pressure_node(ss, to_node)
         
         c = nominal_values(ss, :mach_num)^2 / nominal_values(ss, :euler_num) 
         resistance = resistor["drag"] * c / (2 * resistor["area"]^2)
@@ -274,7 +274,7 @@ function _eval_compressor_equations_mat!(ss::SteadySimulator, x_dof::AbstractArr
         fr_node = comp["fr_node"]
         eqn_to = ref(ss, :node, to_node, "dof")
         eqn_fr = ref(ss, :node, fr_node, "dof")
-        is_pressure_eq = is_pressure_node(ss, fr_node, is_ideal(ss)) || is_pressure_node(ss, to_node, is_ideal(ss))
+        is_pressure_eq = is_pressure_node(ss, fr_node) || is_pressure_node(ss, to_node)
 
         J[eqn_no, eqn_to] = -1
         J[eqn_no, eqn_fr] = (is_pressure_eq) ? (cmpr_val) : (cmpr_val^2)
@@ -308,8 +308,8 @@ function _eval_short_pipe_equations_mat!(ss::SteadySimulator, x_dof::AbstractArr
 
         eqn_fr = ref(ss, :node, fr_node, "dof")
         eqn_to = ref(ss, :node, to_node, "dof")
-        is_fr_pressure_node = is_pressure_node(ss, fr_node, is_ideal(ss))
-        is_to_pressure_node = is_pressure_node(ss, to_node, is_ideal(ss))
+        is_fr_pressure_node = is_pressure_node(ss, fr_node)
+        is_to_pressure_node = is_pressure_node(ss, to_node)
         
         resistance = 1e-7
 
@@ -332,8 +332,8 @@ function _eval_valve_equations_mat!(ss::SteadySimulator, x_dof::AbstractArray,
         fr_node = valve["fr_node"]
         eqn_to = ref(ss, :node, to_node, "dof")
         eqn_fr = ref(ss, :node, fr_node, "dof")
-        is_fr_pressure_node = is_pressure_node(ss, fr_node, is_ideal(ss))
-        is_to_pressure_node = is_pressure_node(ss, to_node, is_ideal(ss))
+        is_fr_pressure_node = is_pressure_node(ss, fr_node)
+        is_to_pressure_node = is_pressure_node(ss, to_node)
 
         if (is_fr_pressure_node && is_to_pressure_node)
             J[eqn_no, eqn_to] = -1.0

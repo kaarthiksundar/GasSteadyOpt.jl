@@ -17,9 +17,7 @@ function _add_nodal_pressure_variables!(sopt::SteadyOptimizer, opt_model::OptMod
     var = opt_model.variables
     ids = keys(ref(sopt, :node))
     (isempty(ids)) && (return)
-    _, b2 = get_eos_coeffs(sopt)
-    is_ideal = isapprox(b2, 0.0)
-    var[:pressure] = @variable(m, [i in ids; is_pressure_node(sopt, i, is_ideal) == true],
+    var[:pressure] = @variable(m, [i in ids; is_pressure_node(sopt, i) == true],
         lower_bound = ref(sopt, :node, i, "min_pressure"), 
         upper_bound = ref(sopt, :node, i, "max_pressure"),
         base_name = "p"
