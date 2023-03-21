@@ -34,6 +34,8 @@ highs = optimizer_with_attributes(HiGHS.Optimizer, "log_to_console"=>false)
 juniper_cplex = optimizer_with_attributes(Juniper.Optimizer, "nl_solver"=>ipopt, "mip_solver"=>cplex)
 juniper_highs = optimizer_with_attributes(Juniper.Optimizer, "nl_solver"=>ipopt, "mip_solver"=>highs)
 
+using PrettyTables
+
 include("algorithms/helper.jl")
 include("algorithms/compute_slack_pressure.jl")
 include("algorithms/ogf.jl")
