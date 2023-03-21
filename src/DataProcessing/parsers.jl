@@ -38,6 +38,7 @@ function parse_network_data(data_folder::AbstractString,
         _add_control_valve_nodes!, 
         _add_loss_resistor_nodes!, 
         _add_valve_nodes!, 
+        _add_pressure_node_labels!,
         apply_on_ref...
         ]
     )

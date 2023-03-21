@@ -50,20 +50,7 @@ function get_potential_derivative(net::NetworkData, pressure)
     return b1 * pressure + b2 * pressure^2
 end 
 
-function is_pressure_node(net::NetworkData, node_id, is_ideal)
-    ids = union(
-            Set(ref(net, :control_valve_nodes)), 
-            Set(ref(net, :loss_resistor_nodes)),
-            Set(ref(net, :valve_nodes)), 
-            Set(ref(net, :compressor_nodes))
-        ) 
-    return node_id in ids
-    if (is_ideal)
-        return node_id in ids
-    else 
-        return node_id in union(ids, Set(ref(net, :compressor_nodes)))
-    end 
-end 
+is_pressure_node(net::NetworkData, node_id) = ref(net, :is_pressure_node, node_id)
 
 function find_ub(net::NetworkData, val::Float64, ub::Float64)::Float64
     @assert ub > 0
