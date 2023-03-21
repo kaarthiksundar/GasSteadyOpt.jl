@@ -8,24 +8,24 @@ function create_network(zip_file::AbstractString,
         eos = eos)
 end 
 
-function run_lp!(sopt::SteadyOptimizer)
-    JuMP.set_optimizer(sopt.linear_relaxation.model, CPLEX.Optimizer)
+function run_lp!(sopt::SteadyOptimizer; solver = cplex)
+    JuMP.set_optimizer(sopt.linear_relaxation.model, solver)
     set_silent(sopt.linear_relaxation.model)
     optimize!(sopt.linear_relaxation.model)
     populate_linear_relaxation_solution!(sopt)
     return
 end 
 
-function run_misoc!(sopt::SteadyOptimizer)
-    JuMP.set_optimizer(sopt.misoc_relaxation.model, CPLEX.Optimizer)
+function run_misoc!(sopt::SteadyOptimizer; solver = cplex)
+    JuMP.set_optimizer(sopt.misoc_relaxation.model, cplex)
     set_silent(sopt.misoc_relaxation.model)
     optimize!(sopt.misoc_relaxation.model)
     populate_misoc_relaxation_solution!(sopt)
     return
 end 
 
-function run_minlp!(sopt::SteadyOptimizer)
-    JuMP.set_optimizer(sopt.nonlinear_full.model, minlp_solver)
+function run_minlp!(sopt::SteadyOptimizer; solver = juniper_cplex)
+    JuMP.set_optimizer(sopt.nonlinear_full.model, solver)
     set_silent(sopt.nonlinear_full.model)
     optimize!(sopt.nonlinear_full.model)
     populate_nonlinear_model_solution!(sopt)

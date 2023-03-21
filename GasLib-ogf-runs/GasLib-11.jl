@@ -3,22 +3,22 @@ include("../src/NGSteady.jl")
 zip_file = "GasLib-data/json/GasLib-11.zip"
 nomination_case = "GasLib-11"
 
-println("... slack pressure data computation started ...")
+# ideal run
+@info "slack pressure computation started"
 slack_pressure_data = compute_slack_pressure(zip_file, nomination_case)
-println("... slack pressure data computation ended ...")
+@info "slack pressure computation ended"
 slack_pressure = slack_pressure_data.slack_pressure 
-net = slack_pressure_data.net 
+net_ideal = slack_pressure_data.net 
+gaslib_11_ogf_ideal = run_ogf(net_ideal)
+pretty_table(gaslib_11_ogf_ideal.stats, title = "GasLib-11 ideal run stats")
 
-sopt = initialize_optimizer(net)
-run_lp!(sopt)
-run_misoc!(sopt)
-run_minlp!(sopt)
-println("MINLP solve time: $(solve_time(sopt.nonlinear_full.model)) sec.")
-println("MISOC solve time: $(solve_time(sopt.misoc_relaxation.model)) sec.")
-println("LP solve time: $(solve_time(sopt.linear_relaxation.model)) sec.")
-ss, sr = run_simulation_with_lp_solution!(net, sopt)
-println("Simulation time: $(sr.time) sec.")
-feasibility = is_solution_feasible!(ss)
-println("Globally optimal: $(feasibility |> first)")
+# simple cnga run
+@info "slack pressure computation started"
+slack_pressure_data = compute_slack_pressure(zip_file, nomination_case; eos = :simple_cnga)
+@info "slack pressure computation ended"
+slack_pressure = slack_pressure_data.slack_pressure 
+net_simple_cnga = slack_pressure_data.net 
+gaslib_11_ogf_simple_cnga = run_ogf(net_simple_cnga)
+pretty_table(gaslib_11_ogf_simple_cnga.stats, title = "GasLib-11 non-ideal run stats")
 
 

@@ -27,12 +27,16 @@ using HiGHS
 using CPLEX 
 using Juniper 
 using Ipopt
-nl_solver = optimizer_with_attributes(Ipopt.Optimizer, "print_level"=>0, "sb"=>"yes")
-mip_solver = optimizer_with_attributes(CPLEX.Optimizer, "CPX_PARAM_SCRIND"=>0)
-minlp_solver = optimizer_with_attributes(Juniper.Optimizer, "nl_solver"=>nl_solver, "mip_solver"=>mip_solver)
+
+ipopt = optimizer_with_attributes(Ipopt.Optimizer, "print_level"=>0, "sb"=>"yes")
+cplex = optimizer_with_attributes(CPLEX.Optimizer, "CPX_PARAM_SCRIND"=>0)
+highs = optimizer_with_attributes(HiGHS.Optimizer, "log_to_console"=>false)
+juniper_cplex = optimizer_with_attributes(Juniper.Optimizer, "nl_solver"=>ipopt, "mip_solver"=>cplex)
+juniper_highs = optimizer_with_attributes(Juniper.Optimizer, "nl_solver"=>ipopt, "mip_solver"=>highs)
 
 include("algorithms/helper.jl")
 include("algorithms/compute_slack_pressure.jl")
+include("algorithms/ogf.jl")
 
 # include("core/types.jl")
 # include("core/bounds.jl")

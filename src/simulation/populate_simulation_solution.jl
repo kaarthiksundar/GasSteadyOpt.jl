@@ -170,7 +170,7 @@ function populate_solution!(ss::SteadySimulator)
     return
 end 
 
-function is_solution_feasible!(ss::SteadySimulator)
+function is_solution_feasible!(ss::SteadySimulator)::NamedTuple
     net = ss.net 
     sol = ss.solution
     min_pressure_bound = []
@@ -182,10 +182,12 @@ function is_solution_feasible!(ss::SteadySimulator)
         (p > p_max) && (push!(max_pressure_bound, i))
         (p < p_min) && (push!(min_pressure_bound, i))
     end 
-    return isempty(max_pressure_bound) && isempty(min_pressure_bound), min_pressure_bound, max_pressure_bound
+    return (is_feasible = isempty(max_pressure_bound) && isempty(min_pressure_bound), 
+        lb_violation = min_pressure_bound, 
+        ub_violation = max_pressure_bound)
 end 
 
-function is_solution_feasible!(net::NetworkData, sol::Solution)
+function is_solution_feasible!(net::NetworkData, sol::Solution)::NamedTuple
     min_pressure_bound = []
     max_pressure_bound = []
     for i in collect(keys(ref(net, :node)))  
@@ -195,5 +197,7 @@ function is_solution_feasible!(net::NetworkData, sol::Solution)
         (p > p_max) && (push!(max_pressure_bound, i))
         (p < p_min) && (push!(min_pressure_bound, i))
     end 
-    return isempty(max_pressure_bound) && isempty(min_pressure_bound), min_pressure_bound, max_pressure_bound
+    return (is_feasible = isempty(max_pressure_bound) && isempty(min_pressure_bound), 
+        lb_violation = min_pressure_bound, 
+        ub_violation = max_pressure_bound)
 end 
