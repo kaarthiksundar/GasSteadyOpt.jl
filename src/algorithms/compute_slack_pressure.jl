@@ -14,12 +14,12 @@ function compute_slack_pressure(
             updated, is_feasible = _run_unique_physical_solution_update!(net, sopt, ss, sr, slack_node_id)
             (updated == false) && (return (slack_pressure = NaN, net = net))
             (updated == true && is_feasible == true) && (return (slack_pressure = ref(net, :node, slack_node_id, "slack_pressure"), net = net))
-            @show "slack_pressure: $(ref(net, :node, slack_node_id, "slack_pressure"))"
+            @info "slack_pressure: $(ref(net, :node, slack_node_id, "slack_pressure"))"
             sopt, ss, sr = _run_lp_with_simulation(net)
         elseif sr.status in [unique_unphysical_solution, unphysical_solution]
             updated = _run_unphysical_solution_update!(net, sopt, ss, sr, slack_node_id) 
             (updated == false) && (return (slack_pressure = NaN, net = net))
-            @show "slack_pressure: $(ref(net, :node, slack_node_id, "slack_pressure"))"
+            @info "slack_pressure: $(ref(net, :node, slack_node_id, "slack_pressure"))"
             sopt, ss, sr = _run_lp_with_simulation(net)
         else 
             return (slack_pressure = NaN, net = net)
@@ -58,9 +58,9 @@ function _run_unique_physical_solution_update!(net::NetworkData,
 
     # update slack pressure by delta = 0.02 
     if isempty(lb)
-        ref(net, :node, slack_node_id)["slack_pressure"] = max(p - 0.02, ref(net, :node, slack_node_id, "min_pressure"))
+        ref(net, :node, slack_node_id)["slack_pressure"] = max(p - 0.01, ref(net, :node, slack_node_id, "min_pressure"))
     else 
-        ref(net, :node, slack_node_id)["slack_pressure"] = min(p + 0.02, ref(net, :node, slack_node_id, "max_pressure"))
+        ref(net, :node, slack_node_id)["slack_pressure"] = min(p + 0.01, ref(net, :node, slack_node_id, "max_pressure"))
     end 
     
     return (updated = true, is_feasible = false)
@@ -83,7 +83,7 @@ function _run_unphysical_solution_update!(net::NetworkData,
     p = sopt.solution_linear.control[:node][slack_node_id]["pressure"] 
     
     # update slack pressure by delta = 0.02 
-    ref(net, :node, slack_node_id)["slack_pressure"] = min(p + 0.02, ref(net, :node, slack_node_id, "max_pressure"))
+    ref(net, :node, slack_node_id)["slack_pressure"] = min(p + 0.01, ref(net, :node, slack_node_id, "max_pressure"))
     
     return true 
 end 
