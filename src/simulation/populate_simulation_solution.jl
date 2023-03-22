@@ -175,29 +175,45 @@ function is_solution_feasible!(ss::SteadySimulator)::NamedTuple
     sol = ss.solution
     min_pressure_bound = []
     max_pressure_bound = []
-    for i in collect(keys(ref(ss, :node)))  
+    min_pressure_violation = 0.0 
+    max_pressure_violation = 0.0
+    for i in collect(keys(ref(net, :node)))  
         p = sol.state[:node][i]["pressure"]
         p_min = ref(net, :node, i, "min_pressure")
         p_max = ref(net, :node, i, "max_pressure")
-        (p > p_max) && (push!(max_pressure_bound, i))
-        (p < p_min) && (push!(min_pressure_bound, i))
+        if p > p_max
+            push!(max_pressure_bound, i)
+            max_pressure_violation = max(p - p_max, max_pressure_violation)
+        end 
+        if p < p_min 
+            push!(min_pressure_bound, i)
+            min_pressure_violation = max(p_min - p, min_pressure_violation)
+        end 
     end 
     return (is_feasible = isempty(max_pressure_bound) && isempty(min_pressure_bound), 
-        lb_violation = min_pressure_bound, 
-        ub_violation = max_pressure_bound)
+        lb_violation = min_pressure_violation, 
+        ub_violation = max_pressure_violation)
 end 
 
 function is_solution_feasible!(net::NetworkData, sol::Solution)::NamedTuple
     min_pressure_bound = []
     max_pressure_bound = []
+    min_pressure_violation = 0.0 
+    max_pressure_violation = 0.0
     for i in collect(keys(ref(net, :node)))  
         p = sol.state[:node][i]["pressure"]
         p_min = ref(net, :node, i, "min_pressure")
         p_max = ref(net, :node, i, "max_pressure")
-        (p > p_max) && (push!(max_pressure_bound, i))
-        (p < p_min) && (push!(min_pressure_bound, i))
+        if p > p_max
+            push!(max_pressure_bound, i)
+            max_pressure_violation = max(p - p_max, max_pressure_violation)
+        end 
+        if p < p_min 
+            push!(min_pressure_bound, i)
+            min_pressure_violation = max(p_min - p, min_pressure_violation)
+        end 
     end 
     return (is_feasible = isempty(max_pressure_bound) && isempty(min_pressure_bound), 
-        lb_violation = min_pressure_bound, 
-        ub_violation = max_pressure_bound)
+        lb_violation = min_pressure_violation, 
+        ub_violation = max_pressure_violation)
 end 

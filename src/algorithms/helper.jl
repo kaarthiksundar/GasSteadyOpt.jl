@@ -38,10 +38,3 @@ function run_simulation_with_lp_solution!(net::NetworkData, sopt::SteadyOptimize
     sr = run_simulator!(ss; show_trace = show_trace)
     return ss, sr
 end 
-
-function run_simulation_with_misoc_solution!(net::NetworkData, sopt::SteadyOptimizer; 
-    show_trace = false)
-    ss = initialize_simulator(net, sopt.solution_misoc)
-    sr = run_simulator!(ss; show_trace = show_trace)
-    return ss, sr
-end 

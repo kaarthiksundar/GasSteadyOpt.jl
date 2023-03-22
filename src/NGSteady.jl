@@ -35,23 +35,11 @@ juniper_cplex = optimizer_with_attributes(Juniper.Optimizer, "nl_solver"=>ipopt,
 juniper_highs = optimizer_with_attributes(Juniper.Optimizer, "nl_solver"=>ipopt, "mip_solver"=>highs)
 
 using PrettyTables
+using DataStructures
 
 include("algorithms/helper.jl")
-include("algorithms/compute_slack_pressure.jl")
+include("algorithms/adjust_slack_pressure.jl")
 include("algorithms/ogf.jl")
-
-# include("core/types.jl")
-# include("core/bounds.jl")
-# include("core/ref.jl")
-# include("core/sol.jl")
-
-# include("form/variables.jl")
-# include("form/constraints.jl")
-# include("form/objective.jl")
-# include("form/nlp.jl")
-# include("form/lp.jl")
-
-# include("core/initialize_sopt.jl")
 
 # include("useful_scripts/helper.jl")
 # include("useful_scripts/resistor_models.jl")

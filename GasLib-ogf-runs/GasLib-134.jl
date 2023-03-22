@@ -6,31 +6,63 @@ include("helper.jl")
 zip_file = "GasLib-data/json/GasLib-134.zip"
 nomination_cases_file = "GasLib-data/data/nomination_files/GasLib-134.json"
 apply_on_data::Vector{Function} = [strengthen_flow_bounds!, modify_entry_nominations!]
-
+instance = "\nGasLib-134"
 cases, num_cases = read_nomination_cases(nomination_cases_file)
 
-for case in cases 
-    # ideal run
-    @info "case: $(case)"
-    @info "slack pressure computation started"
-    slack_pressure_data = compute_slack_pressure(zip_file, case; delta = 0.001)
-    @info "slack pressure computation ended"
-    slack_pressure = slack_pressure_data.slack_pressure 
-    net_ideal = slack_pressure_data.net 
-    gaslib_134_ogf_ideal = run_ogf(net_ideal)
-    pretty_table(gaslib_134_ogf_ideal.stats, title = "GasLib-134 ideal run stats")    
-    p = slack_pressure * nominal_values(net_ideal, :pressure)
+failed_cases = Dict("ideal" => [], "non_ideal" => [], "infeasible" => [])
 
-    # simple cnga run 
-    # net_simple_cnga = create_network(zip_file, case, 
-    #     apply_on_data = apply_on_data, eos = :simple_cnga,
-    #     slack_pressure = p)
-    @info "slack pressure computation started"
-    slack_pressure_data = compute_slack_pressure(zip_file, case; delta = 0.0001, eos=:simple_cnga)
-    @info "slack pressure computation ended"
-    slack_pressure = slack_pressure_data.slack_pressure 
-    net_simple_cnga = slack_pressure_data.net 
-    gaslib_134_ogf_simple_cnga = run_ogf(net_simple_cnga)
-    pretty_table(gaslib_134_ogf_simple_cnga.stats, title = "GasLib-134 non-ideal run stats")
-    break
+for case in cases 
+    @show case
+    # ideal run
+    new_instance = instance * " (" * case * ")"
+    net_ideal = parse_network_data(zip_file, case,
+        apply_on_data = apply_on_data, 
+        eos = :ideal 
+    )
+    result_ideal = run_lp_based_algorithm!(net_ideal)
+    pretty_table(result_ideal.stats, title = new_instance * " ideal run stats")
+    if result_ideal.stats["status"] == "infeasible"
+        push!(failed_cases["infeasible"], case)
+    elseif result_ideal.stats["status"] != "globally_optimal"
+        push!(failed_cases["ideal"], case)
+    end 
+
+    # non ideal run 
+    net_non_ideal = parse_network_data(zip_file, case,
+        apply_on_data = apply_on_data, 
+        eos = :simple_cnga
+    )
+    result_non_ideal = run_lp_based_algorithm!(net_non_ideal)
+    pretty_table(result_non_ideal.stats, title = new_instance * " non ideal run stats")
+    if result_non_ideal.stats["status"] == "infeasible"
+        push!(failed_cases["infeasible"], case)
+    elseif result_non_ideal.stats["status"] != "globally_optimal"
+        push!(failed_cases["non_ideal"], case)
+    end 
+end 
+
+num_ideal_failures = failed_cases["ideal"] |> length
+num_non_ideal_failures = failed_cases["non_ideal"] |> length
+num_infeasibilites = failed_cases["infeasible"] |> length
+
+println("ideal case failures: $(num_ideal_failures)")
+println("non ideal case failures: $(num_non_ideal_failures)")
+println("infeasibilities: $(num_infeasibilites)")
+
+function run_case(case = "2011-11-03")
+    new_instance = instance * " (" * case * ")"
+    net_ideal = parse_network_data(zip_file, case,
+            apply_on_data = apply_on_data, 
+            eos = :ideal 
+    )
+    result_ideal = run_lp_based_algorithm!(net_ideal)
+    pretty_table(result_ideal.stats, title = new_instance * " ideal run stats")
+    
+        # non ideal run 
+    net_non_ideal = parse_network_data(zip_file, case,
+        apply_on_data = apply_on_data, 
+        eos = :simple_cnga
+    )
+    result_non_ideal = run_lp_based_algorithm!(net_non_ideal)
+    pretty_table(result_non_ideal.stats, title = new_instance * " non ideal run stats")
 end 

@@ -1,6 +1,6 @@
 function run_simulator!(ss::SteadySimulator; 
     method::Symbol=:newton,
-    iteration_limit::Int64=2000, 
+    iteration_limit::Int64=100, 
     show_trace::Bool = false,
     kwargs...)::SolverReturn
     
