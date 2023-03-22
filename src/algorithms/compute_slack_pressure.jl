@@ -14,14 +14,15 @@ function compute_slack_pressure(
         if sr.status == unique_physical_solution 
             updated, is_feasible = _run_unique_physical_solution_update!(net, sopt, ss, sr, slack_node_id, delta = delta)
             (updated == false) && (return (slack_pressure = NaN, net = net))
-            (updated == true && is_feasible == true) && (return (slack_pressure = ref(net, :node, slack_node_id, "slack_pressure"), net = net))
+            (updated == true && is_feasible == true) && 
+                (return (slack_pressure = ref(net, :node, slack_node_id, "slack_pressure"), net = net))
             @info "slack_pressure: $(ref(net, :node, slack_node_id, "slack_pressure"))"
-            sopt, ss, sr = _run_lp_with_simulation(net)
+            sopt, ss, sr = _run_simulation(net, sopt)
         elseif sr.status in [unique_unphysical_solution, unphysical_solution]
             updated = _run_unphysical_solution_update!(net, sopt, ss, sr, slack_node_id, delta = delta) 
             (updated == false) && (return (slack_pressure = NaN, net = net))
             @info "slack_pressure: $(ref(net, :node, slack_node_id, "slack_pressure"))"
-            sopt, ss, sr = _run_lp_with_simulation(net)
+            sopt, ss, sr = _run_simulation(net, sopt)
         else 
             return (slack_pressure = NaN, net = net)
         end 
@@ -31,6 +32,11 @@ end
 function _run_lp_with_simulation(net::NetworkData)::NamedTuple
     sopt = initialize_optimizer(net)
     run_lp!(sopt)
+    ss, sr = run_simulation_with_lp_solution!(net, sopt)
+    return (sopt = sopt, ss = ss, sr = sr)
+end 
+
+function _run_simulation(net::NetworkData, sopt::SteadyOptimizer)::NamedTuple 
     ss, sr = run_simulation_with_lp_solution!(net, sopt)
     return (sopt = sopt, ss = ss, sr = sr)
 end 
@@ -61,8 +67,12 @@ function _run_unique_physical_solution_update!(net::NetworkData,
     # update slack pressure by delta = 0.02 
     if isempty(lb)
         ref(net, :node, slack_node_id)["slack_pressure"] = max(p - delta, ref(net, :node, slack_node_id, "min_pressure"))
+        sopt.solution_linear.control[:node][slack_node_id]["pressure"] = 
+            ref(net, :node, slack_node_id)["slack_pressure"]
     else 
         ref(net, :node, slack_node_id)["slack_pressure"] = min(p + delta, ref(net, :node, slack_node_id, "max_pressure"))
+        sopt.solution_linear.control[:node][slack_node_id]["pressure"] = 
+            ref(net, :node, slack_node_id)["slack_pressure"]
     end 
     
     return (updated = true, is_feasible = false)
@@ -87,6 +97,8 @@ function _run_unphysical_solution_update!(net::NetworkData,
     
     # update slack pressure by delta = 0.02 
     ref(net, :node, slack_node_id)["slack_pressure"] = min(p + delta, ref(net, :node, slack_node_id, "max_pressure"))
+    sopt.solution_linear.control[:node][slack_node_id]["pressure"] = 
+        ref(net, :node, slack_node_id)["slack_pressure"]
     
     return true 
 end 
