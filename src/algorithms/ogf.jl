@@ -38,6 +38,7 @@ function run_ogf(net::NetworkData;
 
     (solve_nl) && (stats["minlp_solve_time"] = solve_time(sopt.nonlinear_full.model))
     (solve_nl) && (stats["misoc_solve_time"] = solve_time(sopt.misoc_relaxation.model))
+    stats["total_time"] = stats["lp_solve_time"] + stats["simulation_time"]
     return (sopt = sopt, ss = ss, sim_return = sr, stats = stats)
 
 end 

@@ -156,7 +156,7 @@ function _add_compressor_constraints!(sopt::SteadyOptimizer, opt_model::OptModel
         internal_bypass_required = compressor[i]["internal_bypass_required"] == true
         if !internal_bypass_required
             @constraints(m, begin 
-                flow <= x * compressor[i]["min_flow"]
+                flow >= x * compressor[i]["min_flow"]
                 flow <= x * compressor[i]["max_flow"]
                 p_j >= alpha_min * p_i - (1 - x) * (alpha_min * p_i_max - p_j_min)
                 p_j <= alpha_max * p_i + (1 - x) * (p_j_max - alpha_max * p_i_min)
