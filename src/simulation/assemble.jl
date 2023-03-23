@@ -140,8 +140,16 @@ function _eval_short_pipe_equations!(ss::SteadySimulator, x_dof::AbstractArray, 
         pi_fr = (is_fr_pressure_node) ? get_potential(ss, x_dof[fr_dof]) : x_dof[fr_dof] 
         pi_to = (is_to_pressure_node) ? get_potential(ss, x_dof[to_dof]) : x_dof[to_dof]  
 
-        resistance = 1e-7
-        residual_dof[eqn_no] = pi_fr - pi_to - f * abs(f) * resistance
+        if (is_fr_pressure_node && is_to_pressure_node)
+            residual_dof[eqn_no] = x_dof[fr_dof] - x_dof[to_dof]
+        else
+            pi_fr = (is_fr_pressure_node) ? get_potential(ss, x_dof[fr_dof]) : x_dof[fr_dof] 
+            pi_to = (is_to_pressure_node) ? get_potential(ss, x_dof[to_dof]) : x_dof[to_dof] 
+            residual_dof[eqn_no] = pi_fr - pi_to
+        end 
+
+        # resistance = 1e-7
+        # residual_dof[eqn_no] = pi_fr - pi_to - f * abs(f) * resistance
     end
 end
 
@@ -316,9 +324,19 @@ function _eval_short_pipe_equations_mat!(ss::SteadySimulator, x_dof::AbstractArr
         pi_dash_fr = (is_fr_pressure_node) ? get_potential_derivative(ss, x_dof[eqn_fr]) : 1.0 
         pi_dash_to = (is_to_pressure_node) ? get_potential_derivative(ss, x_dof[eqn_to]) : 1.0 
 
-        J[eqn_no, eqn_fr] = pi_dash_fr
-        J[eqn_no, eqn_to] = -pi_dash_to
-        J[eqn_no, eqn_no] = -2.0 * f * sign(f) * resistance
+        if (is_fr_pressure_node && is_to_pressure_node)
+            J[eqn_no, eqn_to] = -1.0
+            J[eqn_no, eqn_fr] = 1.0
+        else
+            pi_dash_fr = (is_fr_pressure_node) ? get_potential_derivative(ss, x_dof[eqn_fr]) : 1.0 
+            pi_dash_to = (is_to_pressure_node) ? get_potential_derivative(ss, x_dof[eqn_to]) : 1.0
+            J[eqn_no, eqn_to] = -pi_dash_to
+            J[eqn_no, eqn_fr] = pi_dash_fr
+        end  
+
+        # J[eqn_no, eqn_fr] = pi_dash_fr
+        # J[eqn_no, eqn_to] = -pi_dash_to
+        # J[eqn_no, eqn_no] = -2.0 * f * sign(f) * resistance
     end
 end
 

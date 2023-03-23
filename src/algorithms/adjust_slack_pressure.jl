@@ -12,6 +12,10 @@ function adjust_slack_pressure!(net::NetworkData,
         @warn "first simulation run has both max and min pressure bounds violated"
     end 
 
+    # slack pressures 
+    n = 4
+    sp = CircularDeque{Float64}(4)
+    push!(sp, sopt.solution_linear.control[:node][slack_node_id]["pressure"])
     # time tracker 
     total_time = 0.0 
     
@@ -32,8 +36,16 @@ function adjust_slack_pressure!(net::NetworkData,
                     @warn "failed to compute feasible solution, pressure cannot be decreased further"
                     return (success = false, time = total_time)
                 end 
+                if length(sp) > 2 && (new_p == sp[length(sp) - 1])
+                    p_1 = new_p 
+                    p_2 = last(p)
+                    success, t = bisect!(net, sopt, p_1, p_2)
+                    (success == false) && (return (success = false, time = total_time + t))
+                end 
                 ref(net, :node, slack_node_id)["slack_pressure"] = new_p 
                 sopt.solution_linear.control[:node][slack_node_id]["pressure"] = new_p 
+                (length(sp) == n) && (popfirst!(sp))
+                push!(sp, new_p)
                 @info new_p
             end 
 
@@ -44,8 +56,16 @@ function adjust_slack_pressure!(net::NetworkData,
                     @warn "failed to compute feasible solution, pressure cannot be increased further"
                     return (success = false, time = total_time)
                 end 
+                if length(sp) > 2 && (new_p == sp[length(sp) - 1])
+                    p_1 = new_p 
+                    p_2 = last(p)
+                    success, t = bisect!(net, sopt, p_1, p_2)
+                    (success == false) && (return (success = false, time = total_time + t))
+                end 
                 ref(net, :node, slack_node_id)["slack_pressure"] = new_p 
                 sopt.solution_linear.control[:node][slack_node_id]["pressure"] = new_p
+                (length(sp) == n) && (popfirst!(sp))
+                push!(sp, new_p)
                 @info new_p
             end 
 
@@ -74,8 +94,16 @@ function adjust_slack_pressure!(net::NetworkData,
                 @warn "failed to compute feasible solution, pressure cannot be increased further"
                 return (success = false, time = total_time)
             end 
+            if length(sp) > 2 && (new_p == sp[length(sp) - 1])
+                p_1 = new_p 
+                p_2 = last(p)
+                success, t = bisect!(net, sopt, p_1, p_2)
+                (success == false) && (return (success = false, time = total_time + t))
+            end 
             ref(net, :node, slack_node_id)["slack_pressure"] = new_p 
             sopt.solution_linear.control[:node][slack_node_id]["pressure"] = new_p
+            (length(sp) == n) && (popfirst!(sp))
+            push!(sp, new_p)
             @info new_p
 
             ss, sr = run_simulation_with_lp_solution!(net, sopt)
@@ -94,6 +122,82 @@ function adjust_slack_pressure!(net::NetworkData,
     end 
 end 
 
+function bisect!(net::NetworkData, 
+    sopt::SteadyOptimizer, 
+    a::Float64, b::Float64
+)::NamedTuple
+    slack_node_id = ref(net, :slack_nodes) |> first  
+    lb = min(a, b)
+    ub = max(a, b)
+
+    # find violation type for lb 
+    ref(net, :node, slack_node_id)["slack_pressure"] = lb
+    sopt.solution_linear.control[:node][slack_node_id]["pressure"] = lb
+    ss, sr = run_simulation_with_lp_solution!(net, sopt) 
+    is_feasible, lb_violation, ub_violation = is_solution_feasible!(ss)
+    lb_violation_type = (lb_violation > ub_violation) ? :lb : :ub 
+
+    # find violation type for ub 
+    ref(net, :node, slack_node_id)["slack_pressure"] = ub
+    sopt.solution_linear.control[:node][slack_node_id]["pressure"] = ub
+    ss, sr = run_simulation_with_lp_solution!(net, sopt) 
+    is_feasible, lb_violation, ub_violation = is_solution_feasible!(ss)
+    ub_violation_type = (lb_violation > ub_violation) ? :lb : :ub 
+
+    @assert lb_violation_type != ub_violation_type
+
+    iterations = 0 
+    total_time = 0.0 
+    while iterations < 10
+        mp = (lb + ub) * 0.5  
+        @info mp
+        ref(net, :node, slack_node_id)["slack_pressure"] = mp
+        sopt.solution_linear.control[:node][slack_node_id]["pressure"] = mp
+        ss, sr = run_simulation_with_lp_solution!(net, sopt) 
+        total_time += sr.time
+        is_feasible, lb_violation, ub_violation = is_solution_feasible!(ss)
+        (is_feasible) && (return (success = true, time = total_time))
+        mp_violation_type = (lb_violation > ub_violation) ? :lb : :ub 
+        if (lb_violation_type != mp_violation_type)
+            (abs(lb-mp) < 1E-5) && (break)
+            ub = mp 
+            ub_violation_type = mp_violation_type
+        else 
+            (abs(ub-mp) < 1E-5) && (break)
+            lb = mp 
+            lb_violation_type = mp_violation_type
+        end 
+        iterations += 1 
+    end 
+
+    return (success = false, time = total_time)
+end 
+
+
+function compute_slack_pressure!(net::NetworkData, 
+    sopt::SteadyOptimizer; num_tries = 200
+)::NamedTuple
+    slack_node_id = ref(net, :slack_nodes) |> first  
+    min_pressure = ref(net, :node, slack_node_id, "min_pressure")
+    max_pressure = ref(net, :node, slack_node_id, "max_pressure")
+    sp = range(min_pressure, max_pressure; length = num_tries)
+    total_time = 0.0 
+
+    for p in sp 
+        @show p
+        ref(net, :node, slack_node_id)["slack_pressure"] = p
+        sopt.solution_linear.control[:node][slack_node_id]["pressure"] = p
+        ss, sr = run_simulation_with_lp_solution!(net, sopt) 
+        total_time += sr.time
+        (sr.status != unique_physical_solution) && (continue)
+        is_feasible, _, _ = is_solution_feasible!(ss)
+        if is_feasible 
+            return (success = true, time = total_time)
+        end 
+    end 
+
+    return (success = false, time = total_time)
+end 
 
 # function compute_slack_pressure(
 #     zip_file::AbstractString,
