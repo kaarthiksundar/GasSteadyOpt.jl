@@ -35,7 +35,7 @@ end
 
 function run_lp_based_algorithm!(net::NetworkData; 
     objective_type::ObjectiveType = MIN_GENERATION_COST, 
-    lp_solver = cplex, 
+    solver = cplex, 
     slack_pressure_increment = 0.01 
 )::NamedTuple
     sopt = initialize_optimizer(net, 
@@ -46,7 +46,7 @@ function run_lp_based_algorithm!(net::NetworkData;
     )
     stats = Dict{String,Any}("total_time" => NaN, "status" => "unknown")
 
-    run_lp!(sopt, solver = lp_solver)
+    run_lp!(sopt, solver = solver)
     total_time = solve_time(sopt.linear_relaxation.model) 
 
     # LP infeasibity case
@@ -67,6 +67,52 @@ function run_lp_based_algorithm!(net::NetworkData;
     end 
 
     success, t = adjust_slack_pressure!(net, sopt; delta = slack_pressure_increment)
+    total_time += t
+    if (success == false)
+        stats["total_time"] = total_time
+        stats["status"] = "feasible_solution_recovery_failure"
+        return (sopt = sopt, stats = stats)
+    end 
+
+    stats["total_time"] = total_time 
+    stats["status"] = "globally_optimal"
+    return (sopt = sopt, stats = stats)
+end 
+
+function run_misoc_based_algorithm!(net::NetworkData; 
+    objective_type::ObjectiveType = MIN_GENERATION_COST, 
+    solver = cplex, 
+    slack_pressure_increment = 0.01 
+)::NamedTuple
+    sopt = initialize_optimizer(net, 
+        objective_type = objective_type, 
+        nonlinear_model = false, 
+        linear_relaxation = false, 
+        misoc_relaxation = true
+    )
+    stats = Dict{String,Any}("total_time" => NaN, "status" => "unknown")
+
+    run_misoc!(sopt, solver = solver)
+    total_time = solve_time(sopt.misoc_relaxation.model) 
+
+    # MISOC infeasibity case
+    if (JuMP.termination_status(sopt.misoc_relaxation.model) == INFEASIBLE)
+        stats["total_time"] = total_time
+        stats["status"] = "infeasible"
+        return (sopt = sopt, stats = stats)
+    end 
+
+    # first simulation run 
+    ss, sr = run_simulation_with_misoc_solution!(net, sopt)
+    is_feasible, _, _ = is_solution_feasible!(ss)
+    if is_feasible 
+        total_time += sr.time 
+        stats["total_time"] = total_time
+        stats["status"] = "globally_optimal"
+        return (sopt = sopt, stats = stats)
+    end 
+
+    success, t = adjust_slack_pressure!(net, sopt; delta = slack_pressure_increment, linear = false)
     total_time += t
     if (success == false)
         stats["total_time"] = total_time

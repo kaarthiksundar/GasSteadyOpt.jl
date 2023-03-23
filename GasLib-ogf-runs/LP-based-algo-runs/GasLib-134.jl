@@ -12,6 +12,7 @@ cases, num_cases = read_nomination_cases(nomination_cases_file)
 failed_cases = Dict("ideal" => [], "non_ideal" => [])
 infeasible_cases = Dict("ideal" => [], "non_ideal" => [])
 
+
 for case in cases 
     @show case
     # ideal run
