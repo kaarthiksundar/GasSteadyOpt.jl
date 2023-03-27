@@ -1,4 +1,4 @@
-include("../src/NGSteady.jl")
+include("../../src/NGSteady.jl")
 
 include("helper.jl")
 

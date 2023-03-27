@@ -37,12 +37,12 @@ function adjust_slack_pressure!(net::NetworkData,
                     @warn "failed to compute feasible solution, pressure cannot be decreased further"
                     return (success = false, time = total_time)
                 end 
-                if length(sp) > 2 && (new_p == sp[length(sp) - 1])
-                    p_1 = new_p 
-                    p_2 = last(p)
-                    success, t = bisect!(net, sopt, p_1, p_2)
-                    (success == false) && (return (success = false, time = total_time + t))
-                end 
+                # if length(sp) > 2 && (new_p == sp[length(sp) - 1])
+                #     p_1 = new_p 
+                #     p_2 = last(p)
+                #     success, t = bisect!(net, sopt, p_1, p_2)
+                #     (success == false) && (return (success = false, time = total_time + t))
+                # end 
                 ref(net, :node, slack_node_id)["slack_pressure"] = new_p 
                 control[:node][slack_node_id]["pressure"] = new_p 
                 (length(sp) == n) && (popfirst!(sp))
@@ -57,12 +57,12 @@ function adjust_slack_pressure!(net::NetworkData,
                     @warn "failed to compute feasible solution, pressure cannot be increased further"
                     return (success = false, time = total_time)
                 end 
-                if length(sp) > 2 && (new_p == sp[length(sp) - 1])
-                    p_1 = new_p 
-                    p_2 = last(p)
-                    success, t = bisect!(net, sopt, p_1, p_2)
-                    (success == false) && (return (success = false, time = total_time + t))
-                end 
+                # if length(sp) > 2 && (new_p == sp[length(sp) - 1])
+                #     p_1 = new_p 
+                #     p_2 = last(p)
+                #     success, t = bisect!(net, sopt, p_1, p_2)
+                #     (success == false) && (return (success = false, time = total_time + t))
+                # end 
                 ref(net, :node, slack_node_id)["slack_pressure"] = new_p 
                 control[:node][slack_node_id]["pressure"] = new_p
                 (length(sp) == n) && (popfirst!(sp))
@@ -95,22 +95,23 @@ function adjust_slack_pressure!(net::NetworkData,
                 @warn "failed to compute feasible solution, pressure cannot be increased further"
                 return (success = false, time = total_time)
             end 
-            if length(sp) > 2 && (new_p == sp[length(sp) - 1])
-                p_1 = new_p 
-                p_2 = last(p)
-                success, t = bisect!(net, sopt, p_1, p_2)
-                (success == false) && (return (success = false, time = total_time + t))
-            end 
+            # if length(sp) > 2 && (new_p == sp[length(sp) - 1])
+            #     p_1 = new_p 
+            #     p_2 = last(p)
+            #     success, t = bisect!(net, sopt, p_1, p_2)
+            #     (success == false) && (return (success = false, time = total_time + t))
+            # end 
             ref(net, :node, slack_node_id)["slack_pressure"] = new_p 
             control[:node][slack_node_id]["pressure"] = new_p
             (length(sp) == n) && (popfirst!(sp))
             push!(sp, new_p)
-            @info new_p
+            
 
             ss, sr = f(net, sopt)
             total_time += sr.time 
             
             is_feasible, lb_violation, ub_violation = is_solution_feasible!(ss)
+            @info new_p
 
             # return success if feasible 
             (is_feasible) && (return (success = true, time = total_time))

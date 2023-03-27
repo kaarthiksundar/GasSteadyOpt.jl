@@ -1,4 +1,4 @@
-include("../src/NGSteady.jl")
+include("../../src/NGSteady.jl")
 
 zip_file = "GasLib-data/json/GasLib-24.zip"
 nomination_case = "GasLib-24"
