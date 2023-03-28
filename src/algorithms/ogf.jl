@@ -44,17 +44,37 @@ function run_lp_based_algorithm!(net::NetworkData;
         linear_relaxation = true, 
         misoc_relaxation = false
     )
-    stats = Dict{String,Any}("total_time" => NaN, "status" => "unknown")
+    stats = Dict{String,Any}("total_time" => NaN, "status" => "unknown", "relaxation_time" => NaN, "nl_time" => NaN)
 
     run_lp!(sopt, solver = solver)
     total_time = solve_time(sopt.linear_relaxation.model) 
+    stats["relaxation_time"] = solve_time(sopt.linear_relaxation.model) 
 
     # LP infeasibity case
     if (JuMP.termination_status(sopt.linear_relaxation.model) == INFEASIBLE)
         stats["total_time"] = total_time
-        stats["status"] = "infeasible"
+        stats["status"] = "relaxation_infeasible"
         return (sopt = sopt, stats = stats)
     end 
+
+    create_feasibility_nlp!(sopt)
+
+    solve_feasibility_problem!(sopt)
+    total_time += solve_time(sopt.feasibility_nlp.model) 
+    stats["nl_time"] = solve_time(sopt.feasibility_nlp.model) 
+
+    if (JuMP.termination_status(sopt.feasibility_nlp.model) == INFEASIBLE)
+        stats["total_time"] = total_time
+        stats["status"] = "feasible_solution_recovery_failure"
+        return (sopt = sopt, stats = stats)
+    end 
+
+    populate_feasibility_model_solution!(sopt)
+
+    stats["total_time"] = total_time 
+    stats["status"] = "globally_optimal"
+    
+    return (sopt = sopt, stats = stats)
 
     # first simulation run 
     ss, sr = run_simulation_with_lp_solution!(net, sopt)

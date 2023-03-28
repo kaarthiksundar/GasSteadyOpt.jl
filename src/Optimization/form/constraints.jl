@@ -390,10 +390,10 @@ function _add_single_decision_constraints!(sopt::SteadyOptimizer, opt_model::Opt
                         @warn "flow in $component_info will be 0 in decision group $(first(entry))"
                     end 
                 end 
-                if mode != "unknown"
-                    (mode == "active") && (JuMP.fix(var[:compressor_active][component_id], 1))
-                    (mode == "bypass") && (JuMP.fix(var[:compressor_bypass][component_id], 1))
-                end 
+                # if mode != "unknown"
+                #     (mode == "active") && (JuMP.fix(var[:compressor_active][component_id], 1))
+                #     (mode == "bypass") && (JuMP.fix(var[:compressor_bypass][component_id], 1))
+                # end 
             else 
                 JuMP.fix(var[:control_valve_status][component_id], Int(on_off); force = true)
                 if flow_direction != -1 
@@ -403,10 +403,10 @@ function _add_single_decision_constraints!(sopt::SteadyOptimizer, opt_model::Opt
                         @warn "flow in $component_info will be 0 in decision group $(first(entry))"
                     end 
                 end 
-                if mode != "unknown"
-                    (mode == "active") && (JuMP.fix(var[:control_valve_active][component_id], 1))
-                    (mode == "bypass") && (JuMP.fix(var[:control_valve_bypass][component_id], 1))
-                end 
+                # if mode != "unknown"
+                #     (mode == "active") && (JuMP.fix(var[:control_valve_active][component_id], 1))
+                #     (mode == "bypass") && (JuMP.fix(var[:control_valve_bypass][component_id], 1))
+                # end 
             end 
         end 
     end 
@@ -441,14 +441,14 @@ function _add_decision_status!(sopt::SteadyOptimizer, opt_model::OptModel)
                     (component_type == :control_valve) && (@constraint(m, xdg[i] <= var[:control_valve_status][component_id]))
                     (component_type == :compressor) && (@constraint(m, xdg[i] <= var[:compressor_status][component_id]))
                     mode = get(val, "mode", "unknown")
-                    if mode == "active"
-                        (component_type == :control_valve) && (@constraint(m, xdg[i] <= var[:control_valve_active][component_id]))
-                        (component_type == :compressor) && (@constraint(m, xdg[i] <= var[:compressor_active][component_id]))
-                    end 
-                    if mode == "bypass"
-                        (component_type == :control_valve) && (@constraint(m, xdg[i] <= var[:control_valve_bypass][component_id]))
-                        (component_type == :compressor) && (@constraint(m, xdg[i] <= var[:compressor_bypass][component_id]))
-                    end 
+                    # if mode == "active"
+                    #     (component_type == :control_valve) && (@constraint(m, xdg[i] <= var[:control_valve_active][component_id]))
+                    #     (component_type == :compressor) && (@constraint(m, xdg[i] <= var[:compressor_active][component_id]))
+                    # end 
+                    # if mode == "bypass"
+                    #     (component_type == :control_valve) && (@constraint(m, xdg[i] <= var[:control_valve_bypass][component_id]))
+                    #     (component_type == :compressor) && (@constraint(m, xdg[i] <= var[:compressor_bypass][component_id]))
+                    # end 
                 else 
                     (component_type == :valve) && (@constraint(m, xdg[i] <= 1 - var[:valve_status][component_id]))
                     (component_type == :control_valve) && (@constraint(m, xdg[i] <= 1 - var[:control_valve_status][component_id]))

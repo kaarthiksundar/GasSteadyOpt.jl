@@ -29,7 +29,7 @@ initialize_state()::Dict{Symbol,Any} = Dict{Symbol,Any}(
     unknown_control = 100
 end
 
-struct Solution 
+mutable struct Solution 
     state::Dict{Symbol,Any}
     control::Dict{Symbol,Any}
     state_guess::Dict{Symbol,Any}

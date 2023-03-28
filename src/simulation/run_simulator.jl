@@ -13,7 +13,7 @@ function run_simulator!(ss::SteadySimulator;
     assemble_mat!(ss, rand(n), J0)
     df = OnceDifferentiable(residual_fun!, Jacobian_fun!, rand(n), rand(n), J0)
 
-    time = @elapsed soln = nlsolve(df, x_guess; method = method, show_trace = show_trace, iterations = iteration_limit, kwargs...)
+    time = @elapsed soln = nlsolve(df, x_guess; method = method, show_trace = show_trace, autoscale=false, iterations = iteration_limit, kwargs...)
 
     convergence_state = converged(soln)
 

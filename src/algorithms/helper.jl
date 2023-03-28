@@ -45,3 +45,9 @@ function run_simulation_with_misoc_solution!(net::NetworkData, sopt::SteadyOptim
     sr = run_simulator!(ss; show_trace = show_trace)
     return ss, sr
 end 
+
+function solve_feasibility_problem!(sopt::SteadyOptimizer; solver = ipopt)
+    JuMP.set_optimizer(sopt.feasibility_nlp.model, solver)
+    optimize!(sopt.feasibility_nlp.model)
+    return
+end 
