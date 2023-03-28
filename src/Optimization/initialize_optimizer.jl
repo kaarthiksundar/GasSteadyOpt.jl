@@ -12,7 +12,8 @@ function initialize_optimizer(net::NetworkData;
         OptModel(), 
         Solution(), 
         Solution(), 
-        Solution()
+        Solution(),
+        OptModel()
     )    
 
     _initialize_solution!(sopt)

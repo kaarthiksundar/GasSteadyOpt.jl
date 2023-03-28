@@ -8,6 +8,7 @@ include("form/objective.jl")
 include("form/nlp.jl")
 include("form/lp.jl")
 include("form/misocp.jl")
+include("form/feasibility_nlp.jl")
 
 include("initialize_optimizer.jl")
 include("populate_optimization_solution.jl")

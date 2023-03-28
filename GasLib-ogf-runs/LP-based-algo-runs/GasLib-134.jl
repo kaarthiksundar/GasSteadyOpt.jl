@@ -23,7 +23,7 @@ for case in cases
     )
     result_ideal = run_lp_based_algorithm!(net_ideal)
     pretty_table(result_ideal.stats, title = new_instance * " ideal run stats")
-    if result_ideal.stats["status"] == "infeasible"
+    if result_ideal.stats["status"] == "relaxation_infeasible"
         push!(infeasible_cases["ideal"], case)
     end
     if result_ideal.stats["status"] == "feasible_solution_recovery_failure"
@@ -36,7 +36,7 @@ for case in cases
         eos = :simple_cnga
     )
     result_non_ideal = run_lp_based_algorithm!(net_non_ideal)
-    if result_non_ideal.stats["status"] == "infeasible"
+    if result_non_ideal.stats["status"] == "relaxation_x    infeasible"
         push!(infeasible_cases["non_ideal"], case)
     end 
     pretty_table(result_non_ideal.stats, title = new_instance * " non ideal run stats")

@@ -16,6 +16,7 @@ struct SteadyOptimizer
     solution_nonlinear::Solution
     solution_linear::Solution
     solution_misoc::Solution
+    feasibility_nlp::OptModel
 end 
 
 ref(sopt::SteadyOptimizer) = ref(sopt.net)
