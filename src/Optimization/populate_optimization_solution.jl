@@ -28,6 +28,28 @@ function populate_nonlinear_model_solution!(sopt::SteadyOptimizer)
     control[:is_empty] = false
 end 
 
+function populate_feasibility_model_solution!(sopt::SteadyOptimizer; lp::Bool = true)
+    m = sopt.feasibility_nlp.model 
+    var = sopt.feasibility_nlp.variables 
+    net = sopt.net 
+
+    if termination_status(m) == INFEASIBLE 
+        @warn "Nonlinear feasibility model is infeasible"
+        return 
+    end 
+
+    state = (lp) ? sopt.solution_linear.state : sopt.solution_misoc.state 
+    control = (lp) ? sopt.solution_linear.control : sopt.solution_misoc.control 
+
+    populate_compressor_control_valve_ratios!(control, var, net)
+
+    # populate state solution 
+    populate_flows!(state, var, net)
+    populate_nodal_quantities!(state, var, net)
+
+    state[:is_empty] = false 
+end 
+
 function populate_linear_relaxation_solution!(sopt::SteadyOptimizer)
     m = sopt.linear_relaxation.model 
     var = sopt.linear_relaxation.variables 
@@ -135,6 +157,26 @@ function populate_compressor_control_valve_status!(control, var, net)
             if haskey(var[bypass_status], i)
                 control[comp][i]["bypass"] = (JuMP.value(var[bypass_status][i]) > 0.9) ? 1 : 0 
             end 
+            (control[comp][i]["status"] == 0) && (continue)
+            fr_node = ref(net, comp, i, "fr_node")
+            to_node = ref(net, comp, i, "to_node")
+            if comp == :compressor 
+                p_fr = JuMP.value(var[:pressure][fr_node])
+                p_to = JuMP.value(var[:pressure][to_node])
+                control[comp][i]["ratio"] = p_to/p_fr
+            else 
+                p_fr = JuMP.value(var[:pressure][fr_node])
+                p_to = JuMP.value(var[:pressure][to_node])
+                control[comp][i]["differential"] = p_fr - p_to
+            end 
+        end 
+    end 
+end 
+
+function populate_compressor_control_valve_ratios!(control, var, net)
+    component = [:compressor, :control_valve]
+    for comp in component 
+        for i in ref(net, comp) |> keys 
             (control[comp][i]["status"] == 0) && (continue)
             fr_node = ref(net, comp, i, "fr_node")
             to_node = ref(net, comp, i, "to_node")
