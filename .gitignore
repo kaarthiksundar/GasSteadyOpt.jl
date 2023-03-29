@@ -30,5 +30,8 @@ Manifest.toml
 *ic_final.json
 
 GasLib-ogf-runs/paper-runs/output/*
+GasLib-134-runs 
+GasLib-582-runs 
+GasLib-4197-runs
 
 data/*

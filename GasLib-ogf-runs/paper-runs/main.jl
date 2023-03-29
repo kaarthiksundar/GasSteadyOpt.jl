@@ -86,7 +86,7 @@ function run_case()
 end 
 
 function write_results_to_file(file::AbstractString, stats::Dict)
-    open(file,"w") do f
+    open(file, "w") do f
         JSON.print(f, stats, 4)
       end
 end 
