@@ -12,17 +12,20 @@ function create_runs(case::AbstractString)
     
     zip_file_path = "GasLib-data/json/" 
     nomination_case_path = "GasLib-data/data/nomination_files/" 
+    result_path = "GasLib-ogf-runs/paper-runs/output/"
 
     zip_name = (case == "134") ? "GasLib-134.zip" : (case == "582") ? "GasLib-582.zip" : "GasLib-4197.zip"
     nomination_case_name =  split(zip_name, ".")[1] * ".json"
     run_filename =  split(zip_name, ".")[1] * "-runs"
+    result_path = result_path * split(zip_name, ".")[1]
 
     cases, _ = read_nomination_cases(nomination_case_path * nomination_case_name)
     to_write = ""
     for case in cases 
         zip_str = " -z " * zip_file_path * zip_name
         case_str = " -n " * case
-        line = "julia --project=. GasLib-ogf-runs/paper-runs/main.jl" * zip_str * case_str * "\n"
+        result_str = " -r " * result_path
+        line = "julia --project=. GasLib-ogf-runs/paper-runs/main.jl" * zip_str * case_str * result_str * "\n"
         to_write *= line
     end 
 
