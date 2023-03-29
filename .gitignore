@@ -29,4 +29,6 @@ Manifest.toml
 *output.json
 *ic_final.json
 
+GasLib-ogf-runs/paper-runs/output
+
 data/*

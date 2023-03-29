@@ -1,0 +1,11 @@
+{
+    "minlp_objective": 180.54999379990758,
+    "minlp_solve_time": 0.027288999999999997,
+    "misoc_solve_time": 0.004663944244384766,
+    "lp_status": "OPTIMAL",
+    "lp_solve_time": 0.006503105163574219,
+    "minlp_status": "OPTIMAL",
+    "misoc_status": "OPTIMAL",
+    "misoc_objective": 180.54999999999978,
+    "lp_objective": 180.54999999999995
+}
