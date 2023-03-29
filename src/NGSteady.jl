@@ -23,19 +23,14 @@ using LineSearches
 
 include("simulation/simulation.jl")
 
-using HiGHS 
-using CPLEX 
-using Gurobi
-using Juniper 
 using Ipopt
+using SCIP
+using HiGHS
 
 # const gurobi_env = Gurobi.Env(output_flag = 0)
 ipopt = optimizer_with_attributes(Ipopt.Optimizer, "print_level"=>0, "sb"=>"yes")
-cplex = optimizer_with_attributes(CPLEX.Optimizer, "CPX_PARAM_SCRIND"=>0)
-# gurobi = optimizer_with_attributes(() -> Gurobi.Optimizer(gurobi_env))
 highs = optimizer_with_attributes(HiGHS.Optimizer, "log_to_console"=>false)
-juniper_cplex = optimizer_with_attributes(Juniper.Optimizer, "nl_solver"=>ipopt, "mip_solver"=>cplex)
-juniper_highs = optimizer_with_attributes(Juniper.Optimizer, "nl_solver"=>ipopt, "mip_solver"=>highs)
+scip = optimizer_with_attributes(SCIP.Optimizer)
 
 using PrettyTables
 using DataStructures

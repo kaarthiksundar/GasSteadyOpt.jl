@@ -5,9 +5,9 @@ function run_ogf(net::NetworkData;
     misoc_relaxation::Bool = true, 
     solve_nl::Bool = true, 
     solve_misoc::Bool = true, 
-    lp_solver = cplex, 
-    misoc_solver = cplex, 
-    minlp_solver = juniper_cplex
+    lp_solver = highs, 
+    misoc_solver = scip, 
+    minlp_solver = scip
 )
     sopt = initialize_optimizer(net, 
         objective_type = objective_type, 
@@ -21,21 +21,32 @@ function run_ogf(net::NetworkData;
         "lp_solve_time" => NaN, 
     )
 
-    (solve_nl) && (run_minlp!(sopt, solver = minlp_solver)) 
+    if solve_nl
+        run_minlp!(sopt, solver = minlp_solver)
+        stats["minlp_solve_time"] = JuMP.solve_time(sopt.nonlinear_full.model)
+        stats["minlp_status"] = JuMP.termination_status(sopt.nonlinear_full.model)
+        stats["minlp_objective"] = JuMP.objective_value(sopt.nonlinear_full.model)
+    end 
 
-    (solve_misoc) && (run_misoc!(sopt, solver = misoc_solver))
+
+    if solve_misoc
+        run_misoc!(sopt, solver = misoc_solver)
+        stats["misoc_solve_time"] = solve_time(sopt.misoc_relaxation.model)
+        stats["misoc_status"] = JuMP.termination_status(sopt.misoc_relaxation.model)
+        stats["misoc_objective"] = JuMP.objective_value(sopt.misoc_relaxation.model)
+    end 
 
     run_lp!(sopt, solver = lp_solver)
     stats["lp_solve_time"] = solve_time(sopt.linear_relaxation.model)
+    stats["lp_status"] = JuMP.termination_status(sopt.linear_relaxation.model)
+    stats["lp_objective"] = JuMP.objective_value(sopt.linear_relaxation.model)
 
-    (solve_nl) && (stats["minlp_solve_time"] = solve_time(sopt.nonlinear_full.model))
-    (solve_nl) && (stats["misoc_solve_time"] = solve_time(sopt.misoc_relaxation.model))
-    return (sopt = sopt, ss = ss, sim_return = sr, stats = stats)
+    return (sopt = sopt, stats = stats)
 end 
 
 function run_lp_based_algorithm!(net::NetworkData; 
     objective_type::ObjectiveType = MIN_GENERATION_COST, 
-    solver = cplex, 
+    solver = highs, 
     slack_pressure_increment = 0.01 
 )::NamedTuple
     sopt = initialize_optimizer(net, 
@@ -101,7 +112,7 @@ end
 
 function run_misoc_based_algorithm!(net::NetworkData; 
     objective_type::ObjectiveType = MIN_GENERATION_COST, 
-    solver = cplex, 
+    solver = highs, 
     slack_pressure_increment = 0.01 
 )::NamedTuple
     sopt = initialize_optimizer(net, 
