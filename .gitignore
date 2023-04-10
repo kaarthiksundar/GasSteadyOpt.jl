@@ -35,3 +35,7 @@ GasLib-582-runs
 GasLib-4197-runs
 
 data/*
+logs.zip 
+results.zip 
+logs/* 
+results/*
