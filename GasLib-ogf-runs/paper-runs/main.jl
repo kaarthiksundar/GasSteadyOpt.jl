@@ -12,7 +12,7 @@ using CPLEX
 using JSON
 
 scip_opt = SCIP.Optimizer()
-MOI.set(scip_opt, MOI.RawOptimizerAttribute("display/verblevel"), 0)
+# MOI.set(scip_opt, MOI.RawOptimizerAttribute("display/verblevel"), 0)
 cplex_opt = optimizer_with_attributes(CPLEX.Optimizer, "CPX_PARAM_SCRIND"=>0)
 
 for arg in cli_args 
@@ -23,6 +23,7 @@ function create_result_file_with_path()
     result_folder = input_cli_args["resultfolder"]
     (!isdir(result_folder)) && (mkdir(result_folder))
     file = input_cli_args["nominationcase"] * ".json"
+    (isfile(file)) && (return nothing)
     return result_folder * "/" * file
 end 
 
@@ -56,31 +57,60 @@ function run_case()
     MOI.set(scip_opt, MOI.RawOptimizerAttribute("limits/time"), input_cli_args["timelimit"])
     MOI.set(cplex_opt, MOI.RawOptimizerAttribute("CPX_PARAM_TILIM"), input_cli_args["timelimit"])
 
-    # solve minlp 
-    JuMP.set_optimizer(sopt.nonlinear_full.model, () -> scip_opt)
-    JuMP.optimize!(sopt.nonlinear_full.model)
-
-    stats["minlp_solve_time"] = JuMP.solve_time(sopt.nonlinear_full.model)
-    stats["minlp_status"] = JuMP.termination_status(sopt.nonlinear_full.model)
-    stats["minlp_objective"] = JuMP.objective_value(sopt.nonlinear_full.model)
-
     # solve misocp 
+    @info "misoc started"
     JuMP.set_optimizer(sopt.misoc_relaxation.model, cplex_opt)
     JuMP.set_silent(sopt.misoc_relaxation.model)
     JuMP.optimize!(sopt.misoc_relaxation.model)
+    @info "misoc ended"
 
     stats["misoc_solve_time"] = solve_time(sopt.misoc_relaxation.model)
     stats["misoc_status"] = JuMP.termination_status(sopt.misoc_relaxation.model)
-    stats["misoc_objective"] = JuMP.objective_value(sopt.misoc_relaxation.model)
-
+    if (stats["misoc_status"] == INFEASIBLE) 
+        stats["misoc_objective"] = NaN 
+    else 
+        stats["misoc_objective"] = JuMP.objective_value(sopt.misoc_relaxation.model)
+    end 
+    @info stats
+    
     # solve lp 
+    @info "lp started"
     JuMP.set_optimizer(sopt.linear_relaxation.model, cplex_opt)
     JuMP.set_silent(sopt.linear_relaxation.model)
     JuMP.optimize!(sopt.linear_relaxation.model)
+    @info "lp ended"
 
     stats["lp_solve_time"] = solve_time(sopt.linear_relaxation.model)
     stats["lp_status"] = JuMP.termination_status(sopt.linear_relaxation.model)
-    stats["lp_objective"] = JuMP.objective_value(sopt.linear_relaxation.model)
+    if (stats["lp_status"] == MOI.INFEASIBLE) 
+        stats["lp_objective"] = NaN 
+        stats["minlp_solve_time"] = NaN 
+        stats["minlp_status"] = MOI.INFEASIBLE 
+        stats["minlp_objective"] = NaN 
+        @info stats
+        return stats
+    else 
+        stats["lp_objective"] = JuMP.objective_value(sopt.linear_relaxation.model)
+    end 
+    @info stats
+    
+    # solve minlp 
+    @info "minlp started"
+    JuMP.set_optimizer(sopt.nonlinear_full.model, () -> scip_opt)
+    JuMP.optimize!(sopt.nonlinear_full.model)
+    @info "minlp ended"
+
+    stats["minlp_solve_time"] = JuMP.solve_time(sopt.nonlinear_full.model)
+    stats["minlp_status"] = JuMP.termination_status(sopt.nonlinear_full.model)
+    @show stats["minlp_status"]
+    if (stats["minlp_status"] == MOI.TIME_LIMIT)
+        stats["minlp_objective"] = NaN 
+    elseif (stats["minlp_status"] == MOI.INFEASIBLE) 
+        stats["minlp_objective"] = NaN 
+    else 
+        stats["minlp_objective"] = JuMP.objective_value(sopt.nonlinear_full.model)
+    end 
+    @info stats
 
     return stats 
 end 
@@ -91,6 +121,7 @@ function write_results_to_file(file::AbstractString, stats::Dict)
       end
 end 
 
-write_results_to_file(create_result_file_with_path(), run_case())
-@info "ran ended, solution written to file"
+file = create_result_file_with_path()
+(isnothing(file) == false) && (write_results_to_file(file, run_case()))
+@info "run ended, solution written to file"
 
