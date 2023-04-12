@@ -23,7 +23,7 @@ function create_result_file_with_path()
     result_folder = input_cli_args["resultfolder"]
     (!isdir(result_folder)) && (mkdir(result_folder))
     file = input_cli_args["nominationcase"] * ".json"
-    (isfile(file)) && (return nothing)
+    (isfile(result_folder * "/" * file)) && (return nothing)
     return result_folder * "/" * file
 end 
 
@@ -87,12 +87,10 @@ function run_case()
         stats["minlp_solve_time"] = NaN 
         stats["minlp_status"] = MOI.INFEASIBLE 
         stats["minlp_objective"] = NaN 
-        @info stats
         return stats
     else 
         stats["lp_objective"] = JuMP.objective_value(sopt.linear_relaxation.model)
     end 
-    @info stats
     
     # solve minlp 
     @info "minlp started"
@@ -102,7 +100,6 @@ function run_case()
 
     stats["minlp_solve_time"] = JuMP.solve_time(sopt.nonlinear_full.model)
     stats["minlp_status"] = JuMP.termination_status(sopt.nonlinear_full.model)
-    @show stats["minlp_status"]
     if (stats["minlp_status"] == MOI.TIME_LIMIT)
         stats["minlp_objective"] = NaN 
     elseif (stats["minlp_status"] == MOI.INFEASIBLE) 
@@ -110,8 +107,6 @@ function run_case()
     else 
         stats["minlp_objective"] = JuMP.objective_value(sopt.nonlinear_full.model)
     end 
-    @info stats
-
     return stats 
 end 
 
@@ -122,6 +117,7 @@ function write_results_to_file(file::AbstractString, stats::Dict)
 end 
 
 file = create_result_file_with_path()
+(isnothing(file) == true) && (@info "solution file already exists")
 (isnothing(file) == false) && (write_results_to_file(file, run_case()))
-@info "run ended, solution written to file"
+@info "run ended"
 
