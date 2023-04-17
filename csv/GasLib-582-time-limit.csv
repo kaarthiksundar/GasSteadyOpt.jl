@@ -1,0 +1,6 @@
+case,minlp_time,misoc_time,lp_time
+nomination_cold_1232,1000.0,0.29,0.31
+nomination_cold_669,1000.0,0.37,0.29
+nomination_cool_1742,1000.0,0.38,0.27
+nomination_cool_4185,1000.0,0.31,0.16
+nomination_warm_194,1000.01,0.16,0.27

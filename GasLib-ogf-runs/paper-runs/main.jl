@@ -66,7 +66,7 @@ function run_case()
 
     stats["misoc_solve_time"] = solve_time(sopt.misoc_relaxation.model)
     stats["misoc_status"] = JuMP.termination_status(sopt.misoc_relaxation.model)
-    if (stats["misoc_status"] == INFEASIBLE) 
+    if (stats["misoc_status"] == MOI.INFEASIBLE) 
         stats["misoc_objective"] = NaN 
     else 
         stats["misoc_objective"] = JuMP.objective_value(sopt.misoc_relaxation.model)
