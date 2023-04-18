@@ -57,22 +57,6 @@ function run_case()
     MOI.set(scip_opt, MOI.RawOptimizerAttribute("limits/time"), input_cli_args["timelimit"])
     MOI.set(cplex_opt, MOI.RawOptimizerAttribute("CPX_PARAM_TILIM"), input_cli_args["timelimit"])
 
-    # solve misocp 
-    @info "misoc started"
-    JuMP.set_optimizer(sopt.misoc_relaxation.model, cplex_opt)
-    JuMP.set_silent(sopt.misoc_relaxation.model)
-    JuMP.optimize!(sopt.misoc_relaxation.model)
-    @info "misoc ended"
-
-    stats["misoc_solve_time"] = solve_time(sopt.misoc_relaxation.model)
-    stats["misoc_status"] = JuMP.termination_status(sopt.misoc_relaxation.model)
-    if (stats["misoc_status"] == MOI.INFEASIBLE) 
-        stats["misoc_objective"] = NaN 
-    else 
-        stats["misoc_objective"] = JuMP.objective_value(sopt.misoc_relaxation.model)
-    end 
-    @info stats
-    
     # solve lp 
     @info "lp started"
     JuMP.set_optimizer(sopt.linear_relaxation.model, cplex_opt)
@@ -87,11 +71,35 @@ function run_case()
         stats["minlp_solve_time"] = NaN 
         stats["minlp_status"] = MOI.INFEASIBLE 
         stats["minlp_objective"] = NaN 
+        stats["misoc_status"] = MOI.INFEASIBLE 
+        stats["misoc_objective"] = NaN 
+        stats["misoc_solve_time"] = NaN
         return stats
     else 
         stats["lp_objective"] = JuMP.objective_value(sopt.linear_relaxation.model)
     end 
+
+    # solve misocp 
+    @info "misoc started"
+    JuMP.set_optimizer(sopt.misoc_relaxation.model, cplex_opt)
+    JuMP.set_silent(sopt.misoc_relaxation.model)
+    JuMP.optimize!(sopt.misoc_relaxation.model)
+    @info "misoc ended"
+
+    stats["misoc_solve_time"] = solve_time(sopt.misoc_relaxation.model)
+    stats["misoc_status"] = JuMP.termination_status(sopt.misoc_relaxation.model)
+    if (stats["misoc_status"] == MOI.INFEASIBLE) 
+        stats["misoc_objective"] = NaN 
+        stats["minlp_solve_time"] = NaN 
+        stats["minlp_status"] = MOI.INFEASIBLE 
+        stats["minlp_objective"] = NaN 
+        return stats
+    else 
+        stats["misoc_objective"] = JuMP.objective_value(sopt.misoc_relaxation.model)
+    end 
+    @info stats
     
+
     # solve minlp 
     @info "minlp started"
     JuMP.set_optimizer(sopt.nonlinear_full.model, () -> scip_opt)
