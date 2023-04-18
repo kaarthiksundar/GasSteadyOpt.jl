@@ -88,12 +88,15 @@ function run_case()
 
     stats["misoc_solve_time"] = solve_time(sopt.misoc_relaxation.model)
     stats["misoc_status"] = JuMP.termination_status(sopt.misoc_relaxation.model)
+    @info stats
     if (stats["misoc_status"] == MOI.INFEASIBLE) 
         stats["misoc_objective"] = NaN 
         stats["minlp_solve_time"] = NaN 
         stats["minlp_status"] = MOI.INFEASIBLE 
         stats["minlp_objective"] = NaN 
         return stats
+    elseif (status["misoc_status"] == MOI.TIME_LIMIT)
+        stats["misoc_objective"] = NaN
     else 
         stats["misoc_objective"] = JuMP.objective_value(sopt.misoc_relaxation.model)
     end 
