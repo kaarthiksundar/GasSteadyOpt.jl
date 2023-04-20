@@ -95,7 +95,7 @@ function run_case()
         stats["minlp_status"] = MOI.INFEASIBLE 
         stats["minlp_objective"] = NaN 
         return stats
-    elseif (status["misoc_status"] == MOI.TIME_LIMIT)
+    elseif (stats["misoc_status"] == MOI.TIME_LIMIT)
         stats["misoc_objective"] = NaN
     else 
         stats["misoc_objective"] = JuMP.objective_value(sopt.misoc_relaxation.model)
