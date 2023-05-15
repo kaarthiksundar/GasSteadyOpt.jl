@@ -49,7 +49,7 @@ function save_results(case::AbstractString)
         open(other_error, "w") do io 
             writedlm(io, errored_cases, ',')
         end 
-        create_additional_runs(case, errored_cases)
+        # create_additional_runs(case, errored_cases)
     end 
 
     if !isempty(scip_error_cases)
@@ -151,9 +151,13 @@ function collect_results(path::AbstractString, cases::Vector)
         misoc_obj = data["misoc_objective"]
         lp_gap = abs(minlp_obj - lp_obj)/minlp_obj * 100.0
         lp_gap = (abs(lp_gap) < 1e-4) ? 0.0 : lp_gap
-        misoc_gap = abs(minlp_obj - misoc_obj)/minlp_obj * 100.0
-        misoc_gap = (abs(misoc_gap) < 1e-4) ? 0.0 : misoc_gap
-        append!(row, lp_gap, misoc_gap)
+        if isnothing(misoc_obj)
+            append!(row, lp_gap, NaN)
+        else 
+            misoc_gap = abs(minlp_obj - misoc_obj)/minlp_obj * 100.0
+            misoc_gap = (abs(misoc_gap) < 1e-4) ? 0.0 : misoc_gap
+            append!(row, lp_gap, misoc_gap)
+        end 
         push!(successful_rows, row)
     end 
 

@@ -26,10 +26,13 @@ set key spacing 1.5
 unset key
 set logscale y
 set ylabel 'Relative error (\%)'
-set xrange [1.0:9.0]
-set xtics   ('ideal' 2.0, 'simple CNGA' 5.0, 'full CNGA' 8.0)
+# set xrange [1.0:9.0]
+# set xtics   ('ideal' 2.0, 'simple CNGA' 5.0, 'full CNGA' 8.0)
+set xrange [1.0:6.0]
+set xtics   ('Ideal EoS' 2.0, 'CNGA EoS' 5.0)
 set xlabel 'Equation of State (EoS)'
 set output output
 plot 'resistor_model_errors_4197.csv' using (2):1 ls 2 notitle, \
-'' using (5):2 ls 2 notitle, \
-'' using (8):3 ls 2 notitle
+'' using (5):2 ls 2 notitle
+# '' using (5):2 ls 2 notitle, \
+# '' using (8):3 ls 2 notitle

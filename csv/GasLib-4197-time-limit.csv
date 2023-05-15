@@ -15,6 +15,7 @@ nomination_cold_0171,1000.0,777.99,2.68
 nomination_cold_0172,1000.0,9.59,2.78
 nomination_cold_0173,1000.0,7.29,2.64
 nomination_cold_0178,1000.0,7.55,2.59
+nomination_cold_0181,1000.0,1000.23,2.71
 nomination_cold_0186,1000.0,7.42,2.73
 nomination_cold_0200,1000.0,11.1,3.08
 nomination_cold_0206,1000.0,10.0,2.89
@@ -26,6 +27,7 @@ nomination_cold_0285,1000.01,6.56,2.9
 nomination_cold_0293,1000.0,8.04,2.76
 nomination_cold_0301,1000.0,7.13,3.02
 nomination_cold_0309,1000.0,16.93,3.31
+nomination_cold_0341,1000.01,1000.25,3.07
 nomination_cold_0382,1000.0,12.99,2.77
 nomination_cold_0408,1000.0,6.98,2.75
 nomination_cold_0416,1000.0,7.55,2.71
@@ -45,6 +47,7 @@ nomination_cold_0530,1000.0,7.38,2.86
 nomination_cold_0550,1000.04,26.6,2.85
 nomination_cold_0557,1000.0,7.1,3.22
 nomination_cold_0583,1000.01,11.01,2.58
+nomination_cold_0586,1000.0,1001.22,2.59
 nomination_cold_0601,1000.0,9.62,2.9
 nomination_cold_0620,1000.0,39.46,2.94
 nomination_cold_0621,1000.0,8.32,2.72
@@ -52,6 +55,7 @@ nomination_cold_0627,1000.0,41.12,2.99
 nomination_cold_0640,1000.0,26.56,2.72
 nomination_cold_0642,1000.0,12.12,2.71
 nomination_cold_0652,1000.0,25.76,2.82
+nomination_cold_0653,1000.0,1007.19,3.11
 nomination_cold_0657,1000.01,8.92,2.64
 nomination_cold_0658,1000.0,9.88,2.89
 nomination_cold_0683,1000.0,12.19,2.75
@@ -79,10 +83,12 @@ nomination_cold_0924,1000.0,7.9,3.07
 nomination_cold_0936,1000.0,9.23,2.64
 nomination_cold_0979,1000.0,7.96,3.04
 nomination_cold_0991,1000.0,7.18,3.03
+nomination_cold_1007,1000.01,1003.03,2.71
 nomination_cold_1026,1000.0,10.88,2.72
 nomination_cold_1037,1000.0,7.74,2.78
 nomination_cold_1038,1000.0,9.78,2.76
 nomination_cold_1061,1000.0,7.38,2.93
+nomination_cold_1071,1000.0,1002.63,2.54
 nomination_cold_1082,1000.0,7.08,2.67
 nomination_cold_1084,1000.0,13.35,3.06
 nomination_cold_1088,1000.0,7.5,2.59
@@ -120,6 +126,7 @@ nomination_cold_1443,1000.01,36.2,2.9
 nomination_cold_1482,1000.0,39.1,3.01
 nomination_cold_1496,1000.0,29.01,2.73
 nomination_cold_1504,1000.0,8.16,2.73
+nomination_cold_1516,1000.0,1001.43,3.91
 nomination_cold_1525,1000.0,11.15,3.03
 nomination_cold_1526,1000.01,7.96,3.0
 nomination_cold_1604,1000.0,7.45,2.61
@@ -129,6 +136,7 @@ nomination_cold_1660,1000.0,7.48,2.76
 nomination_cold_1669,1000.01,37.27,2.83
 nomination_cold_1682,1000.0,7.97,2.66
 nomination_cold_1695,1000.01,36.14,2.72
+nomination_cold_1697,1000.01,1001.26,3.5
 nomination_cold_1759,1000.0,11.3,2.79
 nomination_cold_1790,1000.0,7.99,2.79
 nomination_cold_1799,1000.02,7.55,2.87
@@ -193,6 +201,7 @@ nomination_cold_2427,1000.0,7.34,2.61
 nomination_cold_2434,1000.0,7.62,2.87
 nomination_cold_2436,1000.0,15.16,2.72
 nomination_cold_2439,1000.0,12.48,2.72
+nomination_cold_2447,1000.0,1002.33,2.6
 nomination_cold_2450,1000.0,7.09,2.59
 nomination_cold_2478,1000.0,48.81,2.69
 nomination_cold_2493,1000.0,9.23,2.81
@@ -218,6 +227,7 @@ nomination_cold_2782,1000.0,12.35,3.06
 nomination_cold_2785,1000.0,7.42,2.74
 nomination_cold_2791,1000.0,8.14,2.88
 nomination_cold_2794,1000.0,48.14,2.57
+nomination_cold_2795,1000.0,1000.47,2.81
 nomination_cold_2801,1000.0,8.21,2.69
 nomination_cold_2817,1000.0,8.95,2.69
 nomination_cold_2819,1000.0,8.18,2.79
@@ -235,12 +245,14 @@ nomination_cool_0112,1000.0,27.41,2.77
 nomination_cool_0121,1000.0,30.08,2.69
 nomination_cool_0135,1000.0,10.21,2.8
 nomination_cool_0152,1000.01,34.85,2.79
+nomination_cool_0177,1000.02,1000.95,2.6
 nomination_cool_0192,1000.0,20.24,2.91
 nomination_cool_0219,1000.0,7.43,3.04
 nomination_cool_0232,1000.0,8.2,2.77
 nomination_cool_0252,1000.0,43.73,2.66
 nomination_cool_0276,1000.01,20.62,2.71
 nomination_cool_0315,1000.0,11.78,2.63
+nomination_cool_0323,1000.0,1000.21,2.72
 nomination_cool_0336,1000.0,7.67,2.65
 nomination_cool_0353,1000.0,8.17,2.89
 nomination_cool_0363,1000.0,32.31,2.69
@@ -248,6 +260,7 @@ nomination_cool_0377,1000.0,7.15,3.21
 nomination_cool_0411,1000.0,10.06,2.86
 nomination_cool_0477,1000.01,37.2,3.12
 nomination_cool_0497,1000.0,13.18,3.55
+nomination_cool_0544,1000.21,1000.32,2.96
 nomination_cool_0563,1000.0,23.65,2.7
 nomination_cool_0567,1000.03,11.39,3.18
 nomination_cool_0573,1000.0,47.68,2.73
@@ -259,6 +272,7 @@ nomination_cool_0785,1000.0,9.05,3.02
 nomination_cool_0802,1000.0,32.21,2.5
 nomination_cool_0809,1000.0,43.98,2.65
 nomination_cool_0810,1000.01,11.32,2.96
+nomination_cool_0849,1000.0,1001.31,2.52
 nomination_cool_0870,1000.0,13.99,2.9
 nomination_cool_0889,1000.01,8.18,2.8
 nomination_cool_0892,1000.0,13.41,2.5
@@ -288,6 +302,7 @@ nomination_cool_1433,1000.01,28.18,2.67
 nomination_cool_1528,1000.0,13.49,2.89
 nomination_cool_1541,1000.0,7.89,3.01
 nomination_cool_1551,1000.02,12.3,3.18
+nomination_cool_1607,1000.01,1001.26,2.88
 nomination_cool_1739,1000.01,10.73,2.78
 nomination_cool_1813,1000.0,7.73,2.85
 nomination_cool_1830,1000.0,32.64,2.72
@@ -297,6 +312,7 @@ nomination_cool_1925,1000.0,31.67,2.66
 nomination_cool_1959,1000.0,35.64,2.94
 nomination_cool_2004,1000.0,11.86,3.17
 nomination_cool_2037,1000.0,6.67,2.7
+nomination_cool_2054,1000.0,1010.64,2.75
 nomination_cool_2086,1000.0,10.91,2.99
 nomination_cool_2170,1000.0,39.12,2.82
 nomination_cool_2201,1000.0,38.07,2.55
@@ -310,6 +326,7 @@ nomination_cool_2472,1000.04,9.78,3.16
 nomination_cool_2495,1000.0,13.68,2.84
 nomination_cool_2509,1000.01,17.09,2.7
 nomination_cool_2516,1000.0,672.34,2.62
+nomination_cool_2552,1000.0,1000.88,2.53
 nomination_cool_2563,1000.0,12.17,2.96
 nomination_cool_2606,1000.0,17.21,2.78
 nomination_cool_2695,1000.0,46.72,3.05
@@ -323,8 +340,10 @@ nomination_cool_2829,1000.0,26.05,3.26
 nomination_cool_2846,1000.0,20.15,2.71
 nomination_cool_2853,1000.0,12.99,2.9
 nomination_hot_0009,1000.0,7.82,3.15
+nomination_hot_0016,1000.0,1001.16,3.61
 nomination_hot_0061,1000.0,10.03,2.87
 nomination_hot_0087,1000.0,33.46,3.06
+nomination_hot_0122,1000.0,1000.6,3.08
 nomination_hot_0194,1000.0,31.19,2.81
 nomination_hot_0196,1000.0,38.24,3.0
 nomination_hot_0201,1000.0,25.03,2.73
@@ -332,6 +351,7 @@ nomination_hot_0209,1000.0,60.79,2.86
 nomination_hot_0225,1000.0,14.18,2.83
 nomination_hot_0238,1000.0,52.96,3.16
 nomination_hot_0248,1000.0,52.26,2.85
+nomination_hot_0277,1000.02,1000.26,3.13
 nomination_hot_0306,1000.0,414.92,2.69
 nomination_hot_0310,1000.0,8.63,2.99
 nomination_hot_0380,1000.0,7.59,2.86
@@ -345,15 +365,21 @@ nomination_hot_0517,1000.0,6.95,2.71
 nomination_hot_0570,1000.0,27.41,2.98
 nomination_hot_0579,1000.0,38.65,2.96
 nomination_hot_0610,1000.0,38.38,3.36
+nomination_hot_0616,1000.0,1000.45,4.21
+nomination_hot_0669,1000.0,1001.04,3.11
 nomination_hot_0672,1000.0,27.27,2.87
+nomination_hot_0708,1000.0,1001.03,3.17
+nomination_hot_0722,1000.0,1002.19,3.25
 nomination_hot_0729,1000.0,11.31,3.05
 nomination_hot_0740,1000.0,7.58,3.1
 nomination_hot_0760,1000.0,894.5,2.93
 nomination_hot_0773,1000.0,23.25,3.38
+nomination_hot_0774,1000.0,1000.22,3.1
 nomination_hot_0776,1000.0,41.21,3.45
 nomination_hot_0777,1000.0,374.9,2.94
 nomination_hot_0829,1000.0,32.67,2.84
 nomination_hot_0835,1000.0,6.95,3.38
+nomination_hot_0898,1000.0,1000.34,2.87
 nomination_hot_0965,1000.0,11.04,3.07
 nomination_hot_0966,1000.0,10.97,3.81
 nomination_hot_0981,1000.0,5.87,2.86
@@ -369,11 +395,14 @@ nomination_hot_1178,1000.0,37.99,3.0
 nomination_hot_1184,1000.0,34.81,2.62
 nomination_hot_1322,1000.0,46.58,2.99
 nomination_hot_1324,1000.0,44.44,3.67
+nomination_hot_1332,1000.0,1000.42,2.85
 nomination_hot_1339,1000.0,31.77,2.93
 nomination_hot_1351,1000.0,10.94,2.95
 nomination_hot_1355,1000.0,10.8,2.92
+nomination_hot_1368,1000.0,1000.48,3.15
 nomination_hot_1397,1000.0,28.54,3.36
 nomination_hot_1476,1000.0,16.93,3.03
+nomination_hot_1480,1000.0,1000.43,3.4
 nomination_hot_1514,1000.0,33.91,2.97
 nomination_hot_1523,1000.0,30.34,3.05
 nomination_hot_1535,1000.0,39.44,3.11
@@ -428,6 +457,7 @@ nomination_hot_2621,1000.0,27.93,2.65
 nomination_hot_2634,1000.0,32.23,2.87
 nomination_hot_2645,1000.0,7.51,3.52
 nomination_hot_2647,1000.0,48.36,3.01
+nomination_hot_2701,1000.0,1000.97,2.58
 nomination_hot_2728,1000.0,27.18,2.84
 nomination_hot_2732,1000.0,29.29,2.77
 nomination_hot_2735,1000.0,38.61,2.87
@@ -439,6 +469,7 @@ nomination_mild_0294,1000.0,8.75,2.66
 nomination_mild_0337,1000.0,41.12,2.88
 nomination_mild_0392,1000.0,11.7,2.45
 nomination_mild_0403,1000.0,7.09,3.31
+nomination_mild_0440,1000.0,1000.81,2.53
 nomination_mild_0580,1000.0,9.16,2.74
 nomination_mild_0614,1000.0,10.55,2.94
 nomination_mild_0665,1000.0,10.93,2.77
@@ -476,6 +507,7 @@ nomination_mild_2051,1000.0,47.5,2.66
 nomination_mild_2118,1000.0,11.47,2.69
 nomination_mild_2158,1000.0,7.29,2.72
 nomination_mild_2172,1000.0,8.91,2.88
+nomination_mild_2249,1000.0,1000.72,2.89
 nomination_mild_2254,1000.01,28.24,2.91
 nomination_mild_2461,1000.0,9.68,2.67
 nomination_mild_2518,1000.0,33.69,2.83
@@ -489,6 +521,8 @@ nomination_mild_2759,1000.0,12.26,2.67
 nomination_warm_0167,1000.0,46.37,2.93
 nomination_warm_0229,1000.0,10.27,2.93
 nomination_warm_0244,1000.0,6.55,2.78
+nomination_warm_0280,1000.0,1001.61,2.99
+nomination_warm_0473,1000.0,1000.9,3.05
 nomination_warm_0495,1000.0,11.88,2.85
 nomination_warm_0549,1000.0,10.14,3.27
 nomination_warm_0599,1000.02,7.63,3.5
@@ -510,6 +544,7 @@ nomination_warm_1257,1000.0,36.51,2.8
 nomination_warm_1381,1000.0,14.31,3.01
 nomination_warm_1454,1000.0,25.72,3.07
 nomination_warm_1508,1000.0,29.82,2.95
+nomination_warm_1574,1000.01,1000.15,2.8
 nomination_warm_1591,1000.0,33.75,2.82
 nomination_warm_1619,1000.0,6.38,3.34
 nomination_warm_1842,1000.01,7.63,2.79
